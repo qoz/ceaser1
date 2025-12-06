@@ -224,7 +224,7 @@
       plainEl.textContent = decoded;
     }
 
-    // UPDATED FUNCTION: only show letters in cipherText + show counts
+    // Only show letters in cipherText + show counts
     function renderMappings() {
       mappingsEl.innerHTML = "";
       if (!cipherText) return;
@@ -236,103 +236,6 @@
         if (alphabet.includes(ch)) freq[ch]++;
       }
 
-      // Determine which letters to show
       const usedLetters = Object.keys(freq).filter(l => freq[l] > 0).sort();
 
-      usedLetters.forEach(letter => {
-        const btn = document.createElement("button");
-        btn.className = "map-btn";
-
-        btn.innerHTML =
-          `<span class="letter">${letter}</span>` +
-          `<span class="count">${freq[letter]}</span>` +
-          `<span class="arrow">→</span>` +
-          `<span class="target">${mapping[letter] || "_"}</span>`;
-
-        btn.addEventListener("pointerdown", () => {
-          const current = mapping[letter] || "";
-          const input = prompt(
-            `Replace ${letter} with (leave empty to clear):`,
-            current
-          );
-          if (input === null) return;
-
-          const trimmed = input.trim().toUpperCase();
-          mapping[letter] = trimmed[0] || "";
-
-          renderMappings();
-          decodeText();
-          messageEl.textContent = "";
-          messageEl.className = "";
-        });
-
-        mappingsEl.appendChild(btn);
-      });
-    }
-
-    function resetMappings() {
-      alphabet.forEach(l => (mapping[l] = ""));
-      renderMappings();
-      decodeText();
-    }
-
-    loadBtn.addEventListener("pointerdown", () => {
-      cipherText = (cipherInput.value || "").trim();
-      solutionText = (solutionInput.value || "").trim();
-
-      if (!cipherText) {
-        messageEl.textContent = "Please enter an encrypted message first.";
-        messageEl.className = "err";
-        cipherEl.textContent = "";
-        plainEl.textContent = "";
-        return;
-      }
-
-      cipherEl.textContent = cipherText;
-      messageEl.textContent = solutionText
-        ? "Message loaded. Start mapping letters and tap 'Check Solution' when ready."
-        : "Message loaded. Start mapping letters.";
-      messageEl.className = "";
-
-      resetMappings();
-    });
-
-    checkBtn.addEventListener("pointerdown", () => {
-      if (!cipherText) {
-        messageEl.textContent = "Load a message first.";
-        messageEl.className = "err";
-        return;
-      }
-
-      if (!solutionText) {
-        messageEl.textContent = "No solution text provided.";
-        messageEl.className = "err";
-        return;
-      }
-
-      const target = solutionText.replace(/\s+/g, "").toUpperCase();
-      const guess = plainEl.textContent
-        .replace(/_/g, "")
-        .replace(/\s+/g, "")
-        .toUpperCase();
-
-      if (guess === target && guess.length > 0) {
-        messageEl.textContent = "🎉 Correct! You solved the cipher.";
-        messageEl.className = "ok";
-      } else {
-        messageEl.textContent = "Not quite yet. Keep trying!";
-        messageEl.className = "err";
-      }
-    });
-
-    clearBtn.addEventListener("pointerdown", () => {
-      resetMappings();
-      messageEl.textContent = "";
-      messageEl.className = "";
-    });
-
-    renderMappings();
-    decodeText();
-  </script>
-</body>
-</html>
+      usedLetters.forEach(letter
