@@ -34,7 +34,7 @@
       box-sizing: border-box;
       padding: 8px;
       border-radius: 8px;
-      border: 1npx solid #444;
+      border: 1px solid #444;
       background: #222;
       color: #f5f5f5;
       font-size: 0.95rem;
@@ -72,7 +72,7 @@
 
     .map-btn {
       min-width: 60px;
-      min-height: 40px;
+      min-height: 50px;
       padding: 4px 6px;
       font-size: 0.9rem;
       border-radius: 6px;
@@ -80,20 +80,32 @@
       background: #222;
       color: #f5f5f5;
       touch-action: manipulation;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
     }
 
-    .map-btn span.letter {
+    .letter {
       font-weight: bold;
+      font-size: 1rem;
     }
 
-    .map-btn span.arrow {
+    .count {
+      font-size: 0.75rem;
+      opacity: 0.7;
+      margin-top: -2px;
+    }
+
+    .arrow {
       opacity: 0.7;
       margin: 0 2px;
     }
 
-    .map-btn span.target {
+    .target {
       font-weight: bold;
       color: #7cf;
+      font-size: 1rem;
     }
 
     .controls {
@@ -142,7 +154,6 @@
 <body>
   <h1>Caesar Cipher Solver</h1>
 
-  <!-- Enter encrypted message -->
   <div class="section">
     <div class="label">Enter encrypted message:</div>
     <textarea id="cipherInput" placeholder="Paste or type the encrypted text here..."></textarea>
@@ -213,22 +224,28 @@
       plainEl.textContent = decoded;
     }
 
-    // UPDATED FUNCTION: only show letters that appear in cipherText
+    // UPDATED FUNCTION: only show letters in cipherText + show counts
     function renderMappings() {
       mappingsEl.innerHTML = "";
-
       if (!cipherText) return;
 
-      const used = new Set();
+      // Count letter frequencies
+      const freq = {};
+      alphabet.forEach(l => freq[l] = 0);
       for (const ch of cipherText.toUpperCase()) {
-        if (alphabet.includes(ch)) used.add(ch);
+        if (alphabet.includes(ch)) freq[ch]++;
       }
 
-      Array.from(used).sort().forEach(letter => {
+      // Determine which letters to show
+      const usedLetters = Object.keys(freq).filter(l => freq[l] > 0).sort();
+
+      usedLetters.forEach(letter => {
         const btn = document.createElement("button");
         btn.className = "map-btn";
+
         btn.innerHTML =
           `<span class="letter">${letter}</span>` +
+          `<span class="count">${freq[letter]}</span>` +
           `<span class="arrow">→</span>` +
           `<span class="target">${mapping[letter] || "_"}</span>`;
 
@@ -260,11 +277,8 @@
     }
 
     loadBtn.addEventListener("pointerdown", () => {
-      const rawCipher = cipherInput.value || "";
-      const rawSolution = solutionInput.value || "";
-
-      cipherText = rawCipher.trim();
-      solutionText = rawSolution.trim();
+      cipherText = (cipherInput.value || "").trim();
+      solutionText = (solutionInput.value || "").trim();
 
       if (!cipherText) {
         messageEl.textContent = "Please enter an encrypted message first.";
@@ -275,7 +289,6 @@
       }
 
       cipherEl.textContent = cipherText;
-
       messageEl.textContent = solutionText
         ? "Message loaded. Start mapping letters and tap 'Check Solution' when ready."
         : "Message loaded. Start mapping letters.";
@@ -318,7 +331,6 @@
       messageEl.className = "";
     });
 
-    // Initial
     renderMappings();
     decodeText();
   </script>
