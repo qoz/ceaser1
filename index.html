@@ -22,6 +22,14 @@
     <div id="hintInfo" class="label" style="margin-top:6px; text-align:center;"></div>
   </div>
 
+  <!-- Dev mode toggle -->
+  <div class="section">
+    <label class="label">
+      <input type="checkbox" id="devMode" />
+      Developer mode: reveal puzzle solutions
+    </label>
+  </div>
+
   <!-- Manual entry section -->
   <div class="section">
     <div class="label">Or enter encrypted message manually:</div>
@@ -88,11 +96,13 @@
     const puzzleSelect    = document.getElementById("puzzleSelect");
     const hintInfo        = document.getElementById("hintInfo");
     const applyHintBtn    = document.getElementById("applyHintBtn");
+    const devModeCheckbox = document.getElementById("devMode");
 
     let cipherText   = "";
     let solutionText = "";
     let puzzles      = [];
     let currentHint  = null;
+    let isPuzzleLoaded = false;  // track whether current content came from a puzzle
 
     // Mapping dictionary: cipher letter -> guessed plaintext letter
     const mapping = {};
@@ -242,9 +252,17 @@
     function loadPuzzleIntoGame(puzzle) {
       cipherText   = puzzle.cipher || "";
       solutionText = puzzle.solution || "";
+      isPuzzleLoaded = true;
+
       cipherEl.textContent = cipherText;
       cipherInput.value    = cipherText;
-      solutionInput.value  = solutionText;
+
+      // Only reveal solution in dev mode
+      if (devModeCheckbox.checked) {
+        solutionInput.value = solutionText;
+      } else {
+        solutionInput.value = "";
+      }
 
       setHintInfo(puzzle.hint);
 
@@ -332,14 +350,34 @@
       const value = puzzleSelect.value;
       if (value === "") {
         setHintInfo(null);
+        isPuzzleLoaded = false;
         return;
       }
       const index = parseInt(value, 10);
       if (isNaN(index) || !puzzles[index]) {
         setHintInfo(null);
+        isPuzzleLoaded = false;
         return;
       }
       loadPuzzleIntoGame(puzzles[index]);
+    });
+
+    // Dev mode toggle: show/hide solution only for loaded puzzles
+    devModeCheckbox.addEventListener("change", function () {
+      if (!isPuzzleLoaded) {
+        return;
+      }
+      if (!cipherText) {
+        return;
+      }
+
+      if (devModeCheckbox.checked) {
+        // Show the solution for the current puzzle
+        solutionInput.value = solutionText || "";
+      } else {
+        // Hide the solution again
+        solutionInput.value = "";
+      }
     });
 
     // Apply hint button
@@ -385,6 +423,7 @@
       cipherText   = (cipherInput.value || "").trim();
       solutionText = (solutionInput.value || "").trim();
       setHintInfo(null);
+      isPuzzleLoaded = false; // this is a manual entry, not a JSON puzzle
 
       if (!cipherText) {
         messageEl.textContent = "Please enter an encrypted message.";
@@ -443,7 +482,6 @@
 
     // Try to auto-load puzzles.json from the same site
     function autoLoadPuzzlesFromServer() {
-      // fetch will fail from file://, but that's okay
       if (typeof fetch !== "function") {
         return;
       }
