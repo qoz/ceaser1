@@ -238,4 +238,132 @@
 
       const usedLetters = Object.keys(freq).filter(l => freq[l] > 0).sort();
 
-      usedLetters.forEach(letter
+      usedLetters.forEach(letter => {
+        const btn = document.createElement("button");
+        btn.className = "map-btn";
+
+        btn.innerHTML =
+          `<span class="letter">${letter}</span>` +
+          `<span class="count">${freq[letter]}</span>` +
+          `<span class="arrow">→</span>` +
+          `<span class="target">${mapping[letter] || "_"}</span>`;
+
+        btn.addEventListener("pointerdown", () => {
+          const current = mapping[letter] || "";
+          const input = prompt(
+            `Replace ${letter} with (leave empty to clear):`,
+            current
+          );
+          if (input === null) return; // canceled
+
+          const trimmed = input.trim().toUpperCase();
+          const newChar = trimmed[0] || "";
+
+          // If user is clearing, just clear it
+          if (!newChar) {
+            mapping[letter] = "";
+            renderMappings();
+            decodeText();
+            messageEl.textContent = "";
+            messageEl.className = "";
+            return;
+          }
+
+          // Check for duplicate substitution
+          const conflict = alphabet.find(
+            l => mapping[l] === newChar && l !== letter
+          );
+
+          if (conflict) {
+            const ok = confirm(
+              `'${newChar}' is already used as a substitution for '${conflict}'.\n` +
+              `Use it for '${letter}' instead and clear it from '${conflict}'?`
+            );
+            if (!ok) {
+              // User declined; do not change mapping
+              return;
+            }
+            // Move substitution: clear from conflict
+            mapping[conflict] = "";
+          }
+
+          // Set new mapping (no duplicates remain)
+          mapping[letter] = newChar;
+
+          renderMappings();
+          decodeText();
+          messageEl.textContent = "";
+          messageEl.className = "";
+        });
+
+        mappingsEl.appendChild(btn);
+      });
+    }
+
+    function resetMappings() {
+      alphabet.forEach(l => (mapping[l] = ""));
+      renderMappings();
+      decodeText();
+    }
+
+    loadBtn.addEventListener("pointerdown", () => {
+      cipherText = (cipherInput.value || "").trim();
+      solutionText = (solutionInput.value || "").trim();
+
+      if (!cipherText) {
+        messageEl.textContent = "Please enter an encrypted message first.";
+        messageEl.className = "err";
+        cipherEl.textContent = "";
+        plainEl.textContent = "";
+        return;
+      }
+
+      cipherEl.textContent = cipherText;
+      messageEl.textContent = solutionText
+        ? "Message loaded. Start mapping letters and tap 'Check Solution' when ready."
+        : "Message loaded. Start mapping letters.";
+      messageEl.className = "";
+
+      resetMappings();
+    });
+
+    checkBtn.addEventListener("pointerdown", () => {
+      if (!cipherText) {
+        messageEl.textContent = "Load a message first.";
+        messageEl.className = "err";
+        return;
+      }
+
+      if (!solutionText) {
+        messageEl.textContent = "No solution text provided.";
+        messageEl.className = "err";
+        return;
+      }
+
+      const target = solutionText.replace(/\s+/g, "").toUpperCase();
+      const guess = plainEl.textContent
+        .replace(/_/g, "")
+        .replace(/\s+/g, "")
+        .toUpperCase();
+
+      if (guess === target && guess.length > 0) {
+        messageEl.textContent = "🎉 Correct! You solved the cipher.";
+        messageEl.className = "ok";
+      } else {
+        messageEl.textContent = "Not quite yet. Keep trying!";
+        messageEl.className = "err";
+      }
+    });
+
+    clearBtn.addEventListener("pointerdown", () => {
+      resetMappings();
+      messageEl.textContent = "";
+      messageEl.className = "";
+    });
+
+    // Initial render
+    renderMappings();
+    decodeText();
+  </script>
+</body>
+</html>
