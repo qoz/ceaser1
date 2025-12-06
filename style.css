@@ -1,0 +1,170 @@
+body {
+  font-family: system-ui, sans-serif;
+  margin: 0;
+  padding: 16px;
+  background: #111;
+  color: #f5f5f5;
+}
+
+h1 {
+  font-size: 1.4rem;
+  margin-bottom: 8px;
+  text-align: center;
+}
+
+.section {
+  margin-bottom: 16px;
+}
+
+.label {
+  font-size: 0.9rem;
+  opacity: 0.8;
+  margin-bottom: 4px;
+}
+
+textarea, input[type="text"], select {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 8px;
+  border-radius: 8px;
+  border: 1px solid #444;
+  background: #222;
+  color: #f5f5f5;
+  font-size: 0.95rem;
+  resize: vertical;
+}
+
+textarea {
+  min-height: 60px;
+}
+
+.cipher-text, .plain-text {
+  padding: 12px;
+  border-radius: 8px;
+  background: #222;
+  min-height: 48px;
+  font-size: 1.1rem;
+  word-wrap: break-word;
+  white-space: pre-wrap;
+}
+
+.cipher-text {
+  border: 1px solid #444;
+}
+
+.plain-text {
+  border: 1px solid #2a6;
+}
+
+#mappings {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: center;
+}
+
+.map-btn {
+  min-width: 60px;
+  min-height: 50px;
+  padding: 4px 6px;
+  font-size: 0.9rem;
+  border-radius: 6px;
+  border: 1px solid #555;
+  background: #222;
+  color: #f5f5f5;
+  touch-action: manipulation;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.letter {
+  font-weight: bold;
+  font-size: 1rem;
+}
+
+.count {
+  font-size: 0.75rem;
+  opacity: 0.7;
+  margin-top: -2px;
+}
+
+.arrow {
+  opacity: 0.7;
+  margin: 0 2px;
+}
+
+.target {
+  font-weight: bold;
+  color: #7cf;
+  font-size: 1rem;
+}
+
+.controls {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 12px;
+  flex-wrap: wrap;
+}
+
+button.big-btn {
+  padding: 10px 16px;
+  font-size: 1rem;
+  border-radius: 999px;
+  border: none;
+  background: #2a6;
+  color: #fff;
+  touch-action: manipulation;
+  cursor: pointer;
+}
+
+button.big-btn.secondary {
+  background: #444;
+}
+
+#message {
+  text-align: center;
+  margin-top: 8px;
+  min-height: 20px;
+  font-size: 0.95rem;
+}
+
+#message.ok {
+  color: #7cfb7c;
+}
+
+#message.err {
+  color: #ff8d8d;
+}
+
+/* Frequency view styles */
+#freqView {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: center;
+}
+
+.freq-item {
+  min-width: 40px;
+  padding: 4px 6px;
+  border-radius: 6px;
+  border: 1px solid #555;
+  background: #181818;
+  text-align: center;
+  font-size: 0.85rem;
+}
+
+.freq-letter {
+  display: block;
+  font-weight: bold;
+  font-size: 0.95rem;
+}
+
+.freq-count {
+  display: block;
+  opacity: 0.8;
+  font-size: 0.8rem;
+}
