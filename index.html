@@ -233,7 +233,7 @@
       if (currentHint && currentHint.cipher && currentHint.plain) {
         var c = String(currentHint.cipher).toUpperCase();
         var p = String(currentHint.plain).toUpperCase();
-        hintInfo.textContent = "Hint: " + c + " → " + p + " (use 'Apply Hint' below).";
+        hintInfo.textContent = "Hint: " + c + " → " + p + " (use 'Apply Hint').";
       } else {
         hintInfo.textContent = "";
       }
@@ -261,7 +261,39 @@
       resetMappings();
     }
 
-    // File loading for puzzles
+    // Helper: apply puzzle data structure from JSON into UI
+    function applyPuzzleData(data) {
+      // Support either { puzzles: [...] } or [...] at top level
+      if (Array.isArray(data)) {
+        puzzles = data;
+      } else if (data && Array.isArray(data.puzzles)) {
+        puzzles = data.puzzles;
+      } else {
+        puzzles = [];
+      }
+
+      puzzleSelect.innerHTML = "";
+
+      if (!puzzles.length) {
+        puzzleSelect.innerHTML = '<option value="">(No puzzles found)</option>';
+        setHintInfo(null);
+        return;
+      }
+
+      puzzleSelect.innerHTML = '<option value="">(Choose a puzzle)</option>';
+      puzzles.forEach(function (p, index) {
+        const opt = document.createElement("option");
+        const title = p.title || ("Puzzle " + (index + 1));
+        const date  = p.publishDate ? (" (" + p.publishDate + ")") : "";
+        opt.value = String(index);
+        opt.textContent = title + date;
+        puzzleSelect.appendChild(opt);
+      });
+
+      setHintInfo(null);
+    }
+
+    // File loading for puzzles (manual)
     puzzleFileInput.addEventListener("change", function (e) {
       const file = e.target.files && e.target.files[0];
       if (!file) {
@@ -274,38 +306,15 @@
           const text = reader.result;
           let data = JSON.parse(text);
 
-          // Support either { puzzles: [...] } or [...] at top level
-          if (Array.isArray(data)) {
-            puzzles = data;
-          } else if (data && Array.isArray(data.puzzles)) {
-            puzzles = data.puzzles;
+          applyPuzzleData(data);
+
+          if (puzzles.length) {
+            messageEl.textContent = "Puzzles loaded from file. Choose one from the dropdown.";
+            messageEl.className = "";
           } else {
-            puzzles = [];
-          }
-
-          puzzleSelect.innerHTML = "";
-
-          if (!puzzles.length) {
-            puzzleSelect.innerHTML = '<option value="">(No puzzles found in file)</option>';
-            setHintInfo(null);
             messageEl.textContent = "No puzzles found in file.";
             messageEl.className = "err";
-            return;
           }
-
-          puzzleSelect.innerHTML = '<option value="">(Choose a puzzle)</option>';
-          puzzles.forEach(function (p, index) {
-            const opt = document.createElement("option");
-            const title = p.title || ("Puzzle " + (index + 1));
-            const date  = p.publishDate ? (" (" + p.publishDate + ")") : "";
-            opt.value = String(index);
-            opt.textContent = title + date;
-            puzzleSelect.appendChild(opt);
-          });
-
-          setHintInfo(null);
-          messageEl.textContent = "Puzzles loaded. Choose one from the dropdown.";
-          messageEl.className = "";
         } catch (err) {
           console.log(err);
           puzzles = [];
@@ -432,9 +441,35 @@
       messageEl.className = "";
     });
 
+    // Try to auto-load puzzles.json from the same site
+    function autoLoadPuzzlesFromServer() {
+      // fetch will fail from file://, but that's okay
+      if (typeof fetch !== "function") {
+        return;
+      }
+      fetch("puzzles.json")
+        .then(function (response) {
+          if (!response.ok) {
+            throw new Error("HTTP " + response.status);
+          }
+          return response.json();
+        })
+        .then(function (data) {
+          applyPuzzleData(data);
+          if (puzzles.length) {
+            messageEl.textContent = "Puzzles loaded from server. Choose one from the dropdown.";
+            messageEl.className = "";
+          }
+        })
+        .catch(function () {
+          // Silent fail: user can still load puzzles via file input or manual text
+        });
+    }
+
     // Initial render (no message yet)
     renderMappings();
     decodeText();
+    autoLoadPuzzlesFromServer();
   </script>
 </body>
 </html>
