@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Caesar Cipher Solver</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body {
+      font-family: system-ui, sans-serif;
+      margin: 0;
+      padding: 16px;
+      background: #111;
+      color: #f5f5f5;
+    }
+
+    h1 {
+      font-size: 1.4rem;
+      margin-bottom: 8px;
+      text-align: center;
+    }
+
+    .section {
+      margin-bottom: 16px;
+    }
+
+    .label {
+      font-size: 0.9rem;
+      opacity: 0.8;
+      margin-bottom: 4px;
+    }
+
+    .cipher-text, .plain-text {
+      padding: 12px;
+      border-radius: 8px;
+      background: #222;
+      min-height: 48px;
+      font-size: 1.1rem;
+      word-wrap: break-word;
+      white-space: pre-wrap;
+    }
+
+    .cipher-text {
+      border: 1px solid #444;
+    }
+
+    .plain-text {
+      border: 1px solid #2a6;
+    }
+
+    #mappings {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      justify-content: center;
+    }
+
+    .map-btn {
+      min-width: 60px;
+      min-height: 40px;
+      padding: 4px 6px;
+      font-size: 0.9rem;
+      border-radius: 6px;
+      border: 1px solid #555;
+      background: #222;
+      color: #f5f5f5;
+      touch-action: manipulation;
+    }
+
+    .map-btn span.letter {
+      font-weight: bold;
+    }
+
+    .map-btn span.arrow {
+      opacity: 0.7;
+      margin: 0 2px;
+    }
+
+    .map-btn span.target {
+      font-weight: bold;
+      color: #7cf;
+    }
+
+    .controls {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      margin-top: 12px;
+      flex-wrap: wrap;
+    }
+
+    button.big-btn {
+      padding: 10px 16px;
+      font-size: 1rem;
+      border-radius: 999px;
+      border: none;
+      background: #2a6;
+      color: #fff;
+      touch-action: manipulation;
+    }
+
+    button.big-btn.secondary {
+      background: #444;
+    }
+
+    #message {
+      text-align: center;
+      margin-top: 8px;
+      min-height: 20px;
+      font-size: 0.95rem;
+    }
+
+    #message.ok {
+      color: #7cfb7c;
+    }
+
+    #message.err {
+      color: #ff8d8d;
+    }
+  </style>
+</head>
+<body>
+  <h1>Caesar Cipher Solver</h1>
+
+  <div class="section">
+    <div class="label">Encrypted message:</div>
+    <div id="cipher" class="cipher-text"></div>
+  </div>
+
+  <div class="section">
+    <div class="label">Your decryption:</div>
+    <div id="plain" class="plain-text"></div>
+  </div>
+
+  <div class="section">
+    <div class="label">Tap a letter to set its replacement:</div>
+    <div id="mappings"></div>
+  </div>
+
+  <div class="controls">
+    <button id="checkBtn" class="big-btn">Check Solution</button>
+    <button id="clearBtn" class="big-btn secondary">Clear Mappings</button>
+  </div>
+
+  <div id="message"></div>
+
+  <script>
+    // --- CONFIG: put your puzzle here ---
+    const cipherText = "KHOOR ZRUOG";       // Encrypted text (e.g. Caesar shift)
+    const solutionText = "HELLO WORLD";     // Correct plaintext for "Check Solution"
+    // ------------------------------------
+
+    const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
+
+    const cipherEl = document.getElementById("cipher");
+    const plainEl = document.getElementById("plain");
+    const mappingsEl = document.getElementById("mappings");
+    const messageEl = document.getElementById("message");
+    const checkBtn = document.getElementById("checkBtn");
+    const clearBtn = document.getElementById("clearBtn");
+
+    // mapping["A"] = "H" means: cipher A is guessed as H
+    const mapping = {};
+    alphabet.forEach(l => mapping[l] = "");
+
+    cipherEl.textContent = cipherText;
+
+    function decodeText() {
+      let decoded = "";
+
+      for (const ch of cipherText) {
+        const up = ch.toUpperCase();
+        if (alphabet.includes(up)) {
+          const rep = mapping[up];
+          decoded += rep ? rep : "_"; // show _ if no guess
+        } else {
+          decoded += ch; // spaces, punctuation, etc.
+        }
+      }
+
+      plainEl.textContent = decoded;
+    }
+
+    function renderMappings() {
+      mappingsEl.innerHTML = "";
+
+      alphabet.forEach(letter => {
+        const btn = document.createElement("button");
+        btn.className = "map-btn";
+        btn.innerHTML =
+          `<span class="letter">${letter}</span>` +
+          `<span class="arrow">→</span>` +
+          `<span class="target">${mapping[letter] || "_"}</span>`;
+
+        // pointerdown works for touch AND mouse
+        btn.addEventListener("pointerdown", () => {
+          const current = mapping[letter] || "";
+          const input = prompt(
+            `Replace ${letter} with (leave empty to clear):`,
+            current
+          );
+          if (input === null) return; // user cancelled
+
+          const trimmed = input.trim().toUpperCase();
+          mapping[letter] = trimmed[0] || ""; // first character or clear
+
+          renderMappings();
+          decodeText();
+          messageEl.textContent = "";
+          messageEl.className = "";
+        });
+
+        mappingsEl.appendChild(btn);
+      });
+    }
+
+    checkBtn.addEventListener("pointerdown", () => {
+      // Compare ignoring case and extra spaces
+      const target = solutionText.replace(/\s+/g, "").toUpperCase();
+      const guess = plainEl.textContent.replace(/_/g, "").replace(/\s+/g, "").toUpperCase();
+
+      if (guess === target && guess.length > 0) {
+        messageEl.textContent = "🎉 Correct! You solved the cipher.";
+        messageEl.className = "ok";
+      } else {
+        messageEl.textContent = "Not quite yet. Keep trying!";
+        messageEl.className = "err";
+      }
+    });
+
+    clearBtn.addEventListener("pointerdown", () => {
+      alphabet.forEach(l => (mapping[l] = ""));
+      renderMappings();
+      decodeText();
+      messageEl.textContent = "";
+      messageEl.className = "";
+    });
+
+    // Initial render
+    renderMappings();
+    decodeText();
+  </script>
+</body>
+</html>
