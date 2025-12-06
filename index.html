@@ -73,16 +73,16 @@
     let cipherText   = "";
     let solutionText = "";
 
-    // Mapping dictionary: cipher letter → guessed plaintext letter
+    // Mapping dictionary: cipher letter -> guessed plaintext letter
     const mapping = {};
-    alphabet.forEach(l => mapping[l] = "");
+    alphabet.forEach(l => { mapping[l] = ""; });
 
     function computeFrequencies() {
       const freq = {};
-      alphabet.forEach(l => freq[l] = 0);
+      alphabet.forEach(l => { freq[l] = 0; });
       for (const ch of cipherText.toUpperCase()) {
         if (alphabet.includes(ch)) {
-          freq[ch]++;
+          freq[ch] = freq[ch] + 1;
         }
       }
       return freq;
@@ -128,7 +128,7 @@
           '<span class="arrow">→</span>' +
           '<span class="target">' + (mapping[letter] || "_") + '</span>';
 
-        btn.addEventListener("click", () => {
+        btn.addEventListener("click", function () {
           const current = mapping[letter] || "";
           const promptMsg = "Replace " + letter + " with (leave empty to clear):";
           const input = window.prompt(promptMsg, current);
@@ -138,7 +138,7 @@
           }
 
           const trimmed = input.trim().toUpperCase();
-          const newChar = trimmed[0] || "";
+          const newChar = trimmed.length > 0 ? trimmed[0] : "";
 
           // Clearing substitution
           if (!newChar) {
@@ -151,14 +151,14 @@
           }
 
           // Prevent duplicate substitutions
-          const conflict = alphabet.find(
-            l => mapping[l] === newChar && l !== letter
-          );
+          const conflict = alphabet.find(function (l) {
+            return mapping[l] === newChar && l !== letter;
+          });
 
           if (conflict) {
             const confirmMsg =
               "'" + newChar + "' is already used as a substitution for '" +
-              conflict + "'.\nUse it for '" + letter +
+              conflict + "'. Use it for '" + letter +
               "' instead and clear it from '" + conflict + "'?";
             const ok = window.confirm(confirmMsg);
             if (!ok) {
@@ -180,7 +180,9 @@
       });
 
       // Frequency view (sorted by descending frequency)
-      const sortedFreqLetters = usedLetters.slice().sort((a, b) => freq[b] - freq[a]);
+      const sortedFreqLetters = usedLetters.slice().sort(function (a, b) {
+        return freq[b] - freq[a];
+      });
 
       sortedFreqLetters.forEach(letter => {
         const div = document.createElement("div");
@@ -193,13 +195,13 @@
     }
 
     function resetMappings() {
-      alphabet.forEach(l => mapping[l] = "");
+      alphabet.forEach(l => { mapping[l] = ""; });
       renderMappings();
       decodeText();
     }
 
     // Load message manually
-    loadBtn.addEventListener("click", () => {
+    loadBtn.addEventListener("click", function () {
       cipherText   = (cipherInput.value || "").trim();
       solutionText = (solutionInput.value || "").trim();
 
@@ -214,16 +216,17 @@
       }
 
       cipherEl.textContent = cipherText;
-      messageEl.textContent =
-        solutionText
-          ? "Message loaded. Start mapping letters or tap 'Check Solution' when ready."
-          : "Message loaded. Start mapping letters.";
+      if (solutionText) {
+        messageEl.textContent = "Message loaded. Start mapping letters or tap 'Check Solution' when ready.";
+      } else {
+        messageEl.textContent = "Message loaded. Start mapping letters.";
+      }
       messageEl.className = "";
 
       resetMappings();
     });
 
-    checkBtn.addEventListener("click", () => {
+    checkBtn.addEventListener("click", function () {
       if (!cipherText) {
         messageEl.textContent = "Load a message first.";
         messageEl.className = "err";
@@ -236,8 +239,8 @@
         return;
       }
 
-      const target = solutionText.replace(/\s+/g, "").toUpperCase();
-      const guess = plainEl.textContent
+      var target = solutionText.replace(/\s+/g, "").toUpperCase();
+      var guess = plainEl.textContent
         .replace(/_/g, "")
         .replace(/\s+/g, "")
         .toUpperCase();
@@ -251,7 +254,7 @@
       }
     });
 
-    clearBtn.addEventListener("click", () => {
+    clearBtn.addEventListener("click", function () {
       resetMappings();
       messageEl.textContent = "";
       messageEl.className = "";
