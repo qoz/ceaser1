@@ -75,11 +75,11 @@
 
     // Mapping dictionary: cipher letter -> guessed plaintext letter
     const mapping = {};
-    alphabet.forEach(l => { mapping[l] = ""; });
+    alphabet.forEach(function (l) { mapping[l] = ""; });
 
     function computeFrequencies() {
       const freq = {};
-      alphabet.forEach(l => { freq[l] = 0; });
+      alphabet.forEach(function (l) { freq[l] = 0; });
       for (const ch of cipherText.toUpperCase()) {
         if (alphabet.includes(ch)) {
           freq[ch] = freq[ch] + 1;
@@ -88,6 +88,7 @@
       return freq;
     }
 
+    // UPDATED: use thin-space between placeholder underscores
     function decodeText() {
       let decoded = "";
 
@@ -95,13 +96,19 @@
         const up = ch.toUpperCase();
         if (alphabet.includes(up)) {
           const rep = mapping[up];
-          decoded += rep ? rep : "_";
+          if (rep) {
+            decoded += rep;
+          } else {
+            // underscore + thin space (HTML entity)
+            decoded += "_&#8201;";
+          }
         } else {
           decoded += ch;
         }
       }
 
-      plainEl.textContent = decoded;
+      // use innerHTML so the thin-space entity is rendered
+      plainEl.innerHTML = decoded;
     }
 
     function renderMappings() {
@@ -113,12 +120,14 @@
       }
 
       const freq = computeFrequencies();
-      const usedLetters = Object.keys(freq).filter(l => freq[l] > 0);
+      const usedLetters = Object.keys(freq).filter(function (l) {
+        return freq[l] > 0;
+      });
 
       // Mapping buttons (alphabetical order)
       const usedAlphabetical = usedLetters.slice().sort();
 
-      usedAlphabetical.forEach(letter => {
+      usedAlphabetical.forEach(function (letter) {
         const btn = document.createElement("button");
         btn.className = "map-btn";
 
@@ -184,7 +193,7 @@
         return freq[b] - freq[a];
       });
 
-      sortedFreqLetters.forEach(letter => {
+      sortedFreqLetters.forEach(function (letter) {
         const div = document.createElement("div");
         div.className = "freq-item";
         div.innerHTML =
@@ -195,7 +204,7 @@
     }
 
     function resetMappings() {
-      alphabet.forEach(l => { mapping[l] = ""; });
+      alphabet.forEach(function (l) { mapping[l] = ""; });
       renderMappings();
       decodeText();
     }
@@ -240,6 +249,7 @@
       }
 
       var target = solutionText.replace(/\s+/g, "").toUpperCase();
+      // use textContent here to get the actual characters (underscore + thin space)
       var guess = plainEl.textContent
         .replace(/_/g, "")
         .replace(/\s+/g, "")
