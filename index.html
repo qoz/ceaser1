@@ -34,7 +34,7 @@
       box-sizing: border-box;
       padding: 8px;
       border-radius: 8px;
-      border: 1npx solid #444;
+      border: 1px solid #444;
       background: #222;
       color: #f5f5f5;
       font-size: 0.95rem;
@@ -72,7 +72,7 @@
 
     .map-btn {
       min-width: 60px;
-      min-height: 40px;
+      min-height: 50px;
       padding: 4px 6px;
       font-size: 0.9rem;
       border-radius: 6px;
@@ -80,20 +80,32 @@
       background: #222;
       color: #f5f5f5;
       touch-action: manipulation;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
     }
 
-    .map-btn span.letter {
+    .letter {
       font-weight: bold;
+      font-size: 1rem;
     }
 
-    .map-btn span.arrow {
+    .count {
+      font-size: 0.75rem;
+      opacity: 0.7;
+      margin-top: -2px;
+    }
+
+    .arrow {
       opacity: 0.7;
       margin: 0 2px;
     }
 
-    .map-btn span.target {
+    .target {
       font-weight: bold;
       color: #7cf;
+      font-size: 1rem;
     }
 
     .controls {
@@ -112,6 +124,7 @@
       background: #2a6;
       color: #fff;
       touch-action: manipulation;
+      cursor: pointer;
     }
 
     button.big-btn.secondary {
@@ -137,12 +150,41 @@
       margin-top: 8px;
       width: 100%;
     }
+
+    /* Frequency view styles */
+    #freqView {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      justify-content: center;
+    }
+
+    .freq-item {
+      min-width: 40px;
+      padding: 4px 6px;
+      border-radius: 6px;
+      border: 1px solid #555;
+      background: #181818;
+      text-align: center;
+      font-size: 0.85rem;
+    }
+
+    .freq-letter {
+      display: block;
+      font-weight: bold;
+      font-size: 0.95rem;
+    }
+
+    .freq-count {
+      display: block;
+      opacity: 0.8;
+      font-size: 0.8rem;
+    }
   </style>
 </head>
 <body>
   <h1>Caesar Cipher Solver</h1>
 
-  <!-- Enter encrypted message -->
   <div class="section">
     <div class="label">Enter encrypted message:</div>
     <textarea id="cipherInput" placeholder="Paste or type the encrypted text here..."></textarea>
@@ -171,6 +213,12 @@
     <div id="mappings"></div>
   </div>
 
+  <!-- Frequency view -->
+  <div class="section">
+    <div class="label">Frequency view (most common letters first):</div>
+    <div id="freqView"></div>
+  </div>
+
   <div class="controls">
     <button id="checkBtn" class="big-btn">Check Solution</button>
     <button id="clearBtn" class="big-btn secondary">Clear Mappings</button>
@@ -181,21 +229,31 @@
   <script>
     const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
 
-    const cipherEl = document.getElementById("cipher");
-    const plainEl = document.getElementById("plain");
-    const mappingsEl = document.getElementById("mappings");
-    const messageEl = document.getElementById("message");
-    const checkBtn = document.getElementById("checkBtn");
-    const clearBtn = document.getElementById("clearBtn");
-    const loadBtn = document.getElementById("loadBtn");
-    const cipherInput = document.getElementById("cipherInput");
-    const solutionInput = document.getElementById("solutionInput");
+    const cipherEl       = document.getElementById("cipher");
+    const plainEl        = document.getElementById("plain");
+    const mappingsEl     = document.getElementById("mappings");
+    const messageEl      = document.getElementById("message");
+    const checkBtn       = document.getElementById("checkBtn");
+    const clearBtn       = document.getElementById("clearBtn");
+    const loadBtn        = document.getElementById("loadBtn");
+    const cipherInput    = document.getElementById("cipherInput");
+    const solutionInput  = document.getElementById("solutionInput");
+    const freqViewEl     = document.getElementById("freqView");
 
-    let cipherText = "";
+    let cipherText  = "";
     let solutionText = "";
 
     const mapping = {};
     alphabet.forEach(l => mapping[l] = "");
+
+    function computeFrequencies() {
+      const freq = {};
+      alphabet.forEach(l => freq[l] = 0);
+      for (const ch of cipherText.toUpperCase()) {
+        if (alphabet.includes(ch)) freq[ch]++;
+      }
+      return freq;
+    }
 
     function decodeText() {
       let decoded = "";
@@ -213,35 +271,68 @@
       plainEl.textContent = decoded;
     }
 
-    // UPDATED FUNCTION: only show letters that appear in cipherText
+    // Render mapping buttons and frequency view
     function renderMappings() {
       mappingsEl.innerHTML = "";
+      freqViewEl.innerHTML = "";
 
       if (!cipherText) return;
 
-      const used = new Set();
-      for (const ch of cipherText.toUpperCase()) {
-        if (alphabet.includes(ch)) used.add(ch);
-      }
+      const freq = computeFrequencies();
+      const usedLetters = Object.keys(freq).filter(l => freq[l] > 0);
 
-      Array.from(used).sort().forEach(letter => {
+      // Mapping buttons sorted alphabetically
+      const usedLettersAlpha = usedLetters.slice().sort();
+
+      usedLettersAlpha.forEach(letter => {
         const btn = document.createElement("button");
         btn.className = "map-btn";
+
         btn.innerHTML =
           `<span class="letter">${letter}</span>` +
+          `<span class="count">${freq[letter]}</span>` +
           `<span class="arrow">→</span>` +
           `<span class="target">${mapping[letter] || "_"}</span>`;
 
-        btn.addEventListener("pointerdown", () => {
+        btn.addEventListener("click", () => {
           const current = mapping[letter] || "";
           const input = prompt(
             `Replace ${letter} with (leave empty to clear):`,
             current
           );
-          if (input === null) return;
+          if (input === null) return; // cancelled
 
           const trimmed = input.trim().toUpperCase();
-          mapping[letter] = trimmed[0] || "";
+          const newChar = trimmed[0] || "";
+
+          // Clearing
+          if (!newChar) {
+            mapping[letter] = "";
+            renderMappings();
+            decodeText();
+            messageEl.textContent = "";
+            messageEl.className = "";
+            return;
+          }
+
+          // Check for duplicate substitution
+          const conflict = alphabet.find(
+            l => mapping[l] === newChar && l !== letter
+          );
+
+          if (conflict) {
+            const ok = confirm(
+              `'${newChar}' is already used as a substitution for '${conflict}'.\n` +
+              `Use it for '${letter}' instead and clear it from '${conflict}'?`
+            );
+            if (!ok) {
+              return;
+            }
+            // Move substitution: clear from conflict
+            mapping[conflict] = "";
+          }
+
+          mapping[letter] = newChar;
 
           renderMappings();
           decodeText();
@@ -251,6 +342,18 @@
 
         mappingsEl.appendChild(btn);
       });
+
+      // Frequency view sorted by descending frequency
+      const usedByFreq = usedLetters.slice().sort((a, b) => freq[b] - freq[a]);
+
+      usedByFreq.forEach(letter => {
+        const div = document.createElement("div");
+        div.className = "freq-item";
+        div.innerHTML =
+          `<span class="freq-letter">${letter}</span>` +
+          `<span class="freq-count">${freq[letter]}</span>`;
+        freqViewEl.appendChild(div);
+      });
     }
 
     function resetMappings() {
@@ -259,23 +362,21 @@
       decodeText();
     }
 
-    loadBtn.addEventListener("pointerdown", () => {
-      const rawCipher = cipherInput.value || "";
-      const rawSolution = solutionInput.value || "";
-
-      cipherText = rawCipher.trim();
-      solutionText = rawSolution.trim();
+    loadBtn.addEventListener("click", () => {
+      cipherText   = (cipherInput.value || "").trim();
+      solutionText = (solutionInput.value || "").trim();
 
       if (!cipherText) {
         messageEl.textContent = "Please enter an encrypted message first.";
         messageEl.className = "err";
         cipherEl.textContent = "";
         plainEl.textContent = "";
+        freqViewEl.innerHTML = "";
+        mappingsEl.innerHTML = "";
         return;
       }
 
       cipherEl.textContent = cipherText;
-
       messageEl.textContent = solutionText
         ? "Message loaded. Start mapping letters and tap 'Check Solution' when ready."
         : "Message loaded. Start mapping letters.";
@@ -284,7 +385,7 @@
       resetMappings();
     });
 
-    checkBtn.addEventListener("pointerdown", () => {
+    checkBtn.addEventListener("click", () => {
       if (!cipherText) {
         messageEl.textContent = "Load a message first.";
         messageEl.className = "err";
@@ -312,13 +413,13 @@
       }
     });
 
-    clearBtn.addEventListener("pointerdown", () => {
+    clearBtn.addEventListener("click", () => {
       resetMappings();
       messageEl.textContent = "";
       messageEl.className = "";
     });
 
-    // Initial
+    // Initial (no message loaded yet)
     renderMappings();
     decodeText();
   </script>
