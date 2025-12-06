@@ -9,39 +9,59 @@
 <body>
   <h1>Caesar Cipher Solver</h1>
 
-  <!-- Puzzle loading section -->
+  <!-- Play mode toggle -->
   <div class="section">
-    <div class="label">Load puzzles from file (JSON):</div>
-    <input type="file" id="puzzleFileInput" accept=".json,application/json,text/plain" />
-
-    <div class="label" style="margin-top:8px;">Choose a puzzle:</div>
-    <select id="puzzleSelect">
-      <option value="">(No puzzles loaded)</option>
-    </select>
-
-    <div id="hintInfo" class="label" style="margin-top:6px; text-align:center;"></div>
-  </div>
-
-  <!-- Dev mode toggle -->
-  <div class="section">
+    <div class="label">Play mode:</div>
     <label class="label">
-      <input type="checkbox" id="devMode" />
-      Developer mode: reveal puzzle solutions
+      <input type="radio" name="playMode" id="modePuzzle" value="puzzle" />
+      Use puzzle list
+    </label>
+    <br />
+    <label class="label">
+      <input type="radio" name="playMode" id="modeManual" value="manual" />
+      Enter puzzle manually
     </label>
   </div>
 
-  <!-- Manual entry section -->
-  <div class="section">
-    <div class="label">Or enter encrypted message manually:</div>
-    <textarea id="cipherInput" placeholder="Paste or type the encrypted text here..."></textarea>
+  <!-- Puzzle-based play (JSON puzzles + dev mode) -->
+  <div id="puzzleModeSection">
+    <!-- Puzzle loading section -->
+    <div class="section">
+      <div class="label">Load puzzles from file (JSON):</div>
+      <input type="file" id="puzzleFileInput" accept=".json,application/json,text/plain" />
 
-    <div class="label" style="margin-top:8px;">
-      (Optional) Enter known solution text for checking:
+      <div class="label" style="margin-top:8px;">Choose a puzzle:</div>
+      <select id="puzzleSelect">
+        <option value="">(No puzzles loaded)</option>
+      </select>
+
+      <div id="hintInfo" class="label" style="margin-top:6px; text-align:center;"></div>
     </div>
-    <input id="solutionInput" type="text"
-           placeholder="If you know the plaintext, enter it here for 'Check Solution'..." />
 
-    <button id="loadBtn" class="big-btn">Load Message</button>
+    <!-- Dev mode toggle -->
+    <div class="section">
+      <label class="label">
+        <input type="checkbox" id="devMode" />
+        Developer mode: reveal puzzle solutions
+      </label>
+    </div>
+  </div>
+
+  <!-- Manual entry play -->
+  <div id="manualModeSection">
+    <!-- Manual entry section -->
+    <div class="section">
+      <div class="label">Enter encrypted message manually:</div>
+      <textarea id="cipherInput" placeholder="Paste or type the encrypted text here..."></textarea>
+
+      <div class="label" style="margin-top:8px;">
+        (Optional) Enter known solution text for checking:
+      </div>
+      <input id="solutionInput" type="text"
+             placeholder="If you know the plaintext, enter it here for 'Check Solution'..." />
+
+      <button id="loadBtn" class="big-btn">Load Message</button>
+    </div>
   </div>
 
   <!-- Encrypted text display -->
@@ -97,6 +117,11 @@
     const hintInfo        = document.getElementById("hintInfo");
     const applyHintBtn    = document.getElementById("applyHintBtn");
     const devModeCheckbox = document.getElementById("devMode");
+
+    const modePuzzleRadio = document.getElementById("modePuzzle");
+    const modeManualRadio = document.getElementById("modeManual");
+    const puzzleModeSection = document.getElementById("puzzleModeSection");
+    const manualModeSection = document.getElementById("manualModeSection");
 
     let cipherText   = "";
     let solutionText = "";
@@ -480,6 +505,29 @@
       messageEl.className = "";
     });
 
+    // Mode toggle logic
+    function setMode(mode) {
+      if (mode === "manual") {
+        puzzleModeSection.style.display = "none";
+        manualModeSection.style.display = "";
+      } else {
+        puzzleModeSection.style.display = "";
+        manualModeSection.style.display = "none";
+      }
+    }
+
+    modePuzzleRadio.addEventListener("change", function () {
+      if (modePuzzleRadio.checked) {
+        setMode("puzzle");
+      }
+    });
+
+    modeManualRadio.addEventListener("change", function () {
+      if (modeManualRadio.checked) {
+        setMode("manual");
+      }
+    });
+
     // Try to auto-load puzzles.json from the same site
     function autoLoadPuzzlesFromServer() {
       if (typeof fetch !== "function") {
@@ -508,6 +556,11 @@
     renderMappings();
     decodeText();
     autoLoadPuzzlesFromServer();
+
+    // Default mode: puzzle list (if user wants manual, they toggle it)
+    modePuzzleRadio.checked = true;
+    modeManualRadio.checked = false;
+    setMode("puzzle");
   </script>
 </body>
 </html>
