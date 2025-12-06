@@ -34,7 +34,7 @@
       box-sizing: border-box;
       padding: 8px;
       border-radius: 8px;
-      border: 1px solid #444;
+      border: 1npx solid #444;
       background: #222;
       color: #f5f5f5;
       font-size: 0.95rem;
@@ -118,10 +118,6 @@
       background: #444;
     }
 
-    button.big-btn.disabled {
-      opacity: 0.5;
-    }
-
     #message {
       text-align: center;
       margin-top: 8px;
@@ -146,7 +142,7 @@
 <body>
   <h1>Caesar Cipher Solver</h1>
 
-  <!-- NEW: input area for the encrypted message (and optional solution) -->
+  <!-- Enter encrypted message -->
   <div class="section">
     <div class="label">Enter encrypted message:</div>
     <textarea id="cipherInput" placeholder="Paste or type the encrypted text here..."></textarea>
@@ -208,19 +204,27 @@
         const up = ch.toUpperCase();
         if (alphabet.includes(up)) {
           const rep = mapping[up];
-          decoded += rep ? rep : "_"; // show _ if no guess
+          decoded += rep ? rep : "_";
         } else {
-          decoded += ch; // spaces, punctuation, etc.
+          decoded += ch;
         }
       }
 
       plainEl.textContent = decoded;
     }
 
+    // UPDATED FUNCTION: only show letters that appear in cipherText
     function renderMappings() {
       mappingsEl.innerHTML = "";
 
-      alphabet.forEach(letter => {
+      if (!cipherText) return;
+
+      const used = new Set();
+      for (const ch of cipherText.toUpperCase()) {
+        if (alphabet.includes(ch)) used.add(ch);
+      }
+
+      Array.from(used).sort().forEach(letter => {
         const btn = document.createElement("button");
         btn.className = "map-btn";
         btn.innerHTML =
@@ -229,21 +233,15 @@
           `<span class="target">${mapping[letter] || "_"}</span>`;
 
         btn.addEventListener("pointerdown", () => {
-          if (!cipherText) {
-            messageEl.textContent = "Enter and load a message first.";
-            messageEl.className = "err";
-            return;
-          }
-
           const current = mapping[letter] || "";
           const input = prompt(
             `Replace ${letter} with (leave empty to clear):`,
             current
           );
-          if (input === null) return; // user cancelled
+          if (input === null) return;
 
           const trimmed = input.trim().toUpperCase();
-          mapping[letter] = trimmed[0] || ""; // first character or clear
+          mapping[letter] = trimmed[0] || "";
 
           renderMappings();
           decodeText();
@@ -277,9 +275,10 @@
       }
 
       cipherEl.textContent = cipherText;
+
       messageEl.textContent = solutionText
         ? "Message loaded. Start mapping letters and tap 'Check Solution' when ready."
-        : "Message loaded. Start mapping letters. No solution text provided, so 'Check Solution' is optional.";
+        : "Message loaded. Start mapping letters.";
       messageEl.className = "";
 
       resetMappings();
@@ -293,7 +292,7 @@
       }
 
       if (!solutionText) {
-        messageEl.textContent = "No solution text was entered. Just use the decoded text to visually check your answer.";
+        messageEl.textContent = "No solution text provided.";
         messageEl.className = "err";
         return;
       }
@@ -319,7 +318,7 @@
       messageEl.className = "";
     });
 
-    // Initial render (before any message is loaded)
+    // Initial
     renderMappings();
     decodeText();
   </script>
