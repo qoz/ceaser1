@@ -29,6 +29,22 @@
       margin-bottom: 4px;
     }
 
+    textarea, input[type="text"] {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 8px;
+      border-radius: 8px;
+      border: 1px solid #444;
+      background: #222;
+      color: #f5f5f5;
+      font-size: 0.95rem;
+      resize: vertical;
+    }
+
+    textarea {
+      min-height: 60px;
+    }
+
     .cipher-text, .plain-text {
       padding: 12px;
       border-radius: 8px;
@@ -102,6 +118,10 @@
       background: #444;
     }
 
+    button.big-btn.disabled {
+      opacity: 0.5;
+    }
+
     #message {
       text-align: center;
       margin-top: 8px;
@@ -116,10 +136,29 @@
     #message.err {
       color: #ff8d8d;
     }
+
+    #loadBtn {
+      margin-top: 8px;
+      width: 100%;
+    }
   </style>
 </head>
 <body>
   <h1>Caesar Cipher Solver</h1>
+
+  <!-- NEW: input area for the encrypted message (and optional solution) -->
+  <div class="section">
+    <div class="label">Enter encrypted message:</div>
+    <textarea id="cipherInput" placeholder="Paste or type the encrypted text here..."></textarea>
+
+    <div class="label" style="margin-top:8px;">
+      (Optional) Enter known solution text for checking:
+    </div>
+    <input id="solutionInput" type="text"
+           placeholder="If you know the plaintext, enter it here for 'Check Solution'..." />
+
+    <button id="loadBtn" class="big-btn">Load Message</button>
+  </div>
 
   <div class="section">
     <div class="label">Encrypted message:</div>
@@ -144,11 +183,6 @@
   <div id="message"></div>
 
   <script>
-    // --- CONFIG: put your puzzle here ---
-    const cipherText = "KHOOR ZRUOG";       // Encrypted text (e.g. Caesar shift)
-    const solutionText = "HELLO WORLD";     // Correct plaintext for "Check Solution"
-    // ------------------------------------
-
     const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
 
     const cipherEl = document.getElementById("cipher");
@@ -157,12 +191,15 @@
     const messageEl = document.getElementById("message");
     const checkBtn = document.getElementById("checkBtn");
     const clearBtn = document.getElementById("clearBtn");
+    const loadBtn = document.getElementById("loadBtn");
+    const cipherInput = document.getElementById("cipherInput");
+    const solutionInput = document.getElementById("solutionInput");
 
-    // mapping["A"] = "H" means: cipher A is guessed as H
+    let cipherText = "";
+    let solutionText = "";
+
     const mapping = {};
     alphabet.forEach(l => mapping[l] = "");
-
-    cipherEl.textContent = cipherText;
 
     function decodeText() {
       let decoded = "";
@@ -191,8 +228,13 @@
           `<span class="arrow">→</span>` +
           `<span class="target">${mapping[letter] || "_"}</span>`;
 
-        // pointerdown works for touch AND mouse
         btn.addEventListener("pointerdown", () => {
+          if (!cipherText) {
+            messageEl.textContent = "Enter and load a message first.";
+            messageEl.className = "err";
+            return;
+          }
+
           const current = mapping[letter] || "";
           const input = prompt(
             `Replace ${letter} with (leave empty to clear):`,
@@ -213,10 +255,54 @@
       });
     }
 
+    function resetMappings() {
+      alphabet.forEach(l => (mapping[l] = ""));
+      renderMappings();
+      decodeText();
+    }
+
+    loadBtn.addEventListener("pointerdown", () => {
+      const rawCipher = cipherInput.value || "";
+      const rawSolution = solutionInput.value || "";
+
+      cipherText = rawCipher.trim();
+      solutionText = rawSolution.trim();
+
+      if (!cipherText) {
+        messageEl.textContent = "Please enter an encrypted message first.";
+        messageEl.className = "err";
+        cipherEl.textContent = "";
+        plainEl.textContent = "";
+        return;
+      }
+
+      cipherEl.textContent = cipherText;
+      messageEl.textContent = solutionText
+        ? "Message loaded. Start mapping letters and tap 'Check Solution' when ready."
+        : "Message loaded. Start mapping letters. No solution text provided, so 'Check Solution' is optional.";
+      messageEl.className = "";
+
+      resetMappings();
+    });
+
     checkBtn.addEventListener("pointerdown", () => {
-      // Compare ignoring case and extra spaces
+      if (!cipherText) {
+        messageEl.textContent = "Load a message first.";
+        messageEl.className = "err";
+        return;
+      }
+
+      if (!solutionText) {
+        messageEl.textContent = "No solution text was entered. Just use the decoded text to visually check your answer.";
+        messageEl.className = "err";
+        return;
+      }
+
       const target = solutionText.replace(/\s+/g, "").toUpperCase();
-      const guess = plainEl.textContent.replace(/_/g, "").replace(/\s+/g, "").toUpperCase();
+      const guess = plainEl.textContent
+        .replace(/_/g, "")
+        .replace(/\s+/g, "")
+        .toUpperCase();
 
       if (guess === target && guess.length > 0) {
         messageEl.textContent = "🎉 Correct! You solved the cipher.";
@@ -228,14 +314,12 @@
     });
 
     clearBtn.addEventListener("pointerdown", () => {
-      alphabet.forEach(l => (mapping[l] = ""));
-      renderMappings();
-      decodeText();
+      resetMappings();
       messageEl.textContent = "";
       messageEl.className = "";
     });
 
-    // Initial render
+    // Initial render (before any message is loaded)
     renderMappings();
     decodeText();
   </script>
