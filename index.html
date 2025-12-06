@@ -59,16 +59,16 @@
   <script>
     const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
 
-    const cipherEl       = document.getElementById("cipher");
-    const plainEl        = document.getElementById("plain");
-    const mappingsEl     = document.getElementById("mappings");
-    const messageEl      = document.getElementById("message");
-    const checkBtn       = document.getElementById("checkBtn");
-    const clearBtn       = document.getElementById("clearBtn");
-    const loadBtn        = document.getElementById("loadBtn");
-    const cipherInput    = document.getElementById("cipherInput");
-    const solutionInput  = document.getElementById("solutionInput");
-    const freqViewEl     = document.getElementById("freqView");
+    const cipherEl      = document.getElementById("cipher");
+    const plainEl       = document.getElementById("plain");
+    const mappingsEl    = document.getElementById("mappings");
+    const messageEl     = document.getElementById("message");
+    const checkBtn      = document.getElementById("checkBtn");
+    const clearBtn      = document.getElementById("clearBtn");
+    const loadBtn       = document.getElementById("loadBtn");
+    const cipherInput   = document.getElementById("cipherInput");
+    const solutionInput = document.getElementById("solutionInput");
+    const freqViewEl    = document.getElementById("freqView");
 
     let cipherText   = "";
     let solutionText = "";
@@ -81,7 +81,9 @@
       const freq = {};
       alphabet.forEach(l => freq[l] = 0);
       for (const ch of cipherText.toUpperCase()) {
-        if (alphabet.includes(ch)) freq[ch]++;
+        if (alphabet.includes(ch)) {
+          freq[ch]++;
+        }
       }
       return freq;
     }
@@ -106,12 +108,14 @@
       mappingsEl.innerHTML = "";
       freqViewEl.innerHTML = "";
 
-      if (!cipherText) return;
+      if (!cipherText) {
+        return;
+      }
 
       const freq = computeFrequencies();
       const usedLetters = Object.keys(freq).filter(l => freq[l] > 0);
 
-      // Mapping buttons (alphabetical)
+      // Mapping buttons (alphabetical order)
       const usedAlphabetical = usedLetters.slice().sort();
 
       usedAlphabetical.forEach(letter => {
@@ -119,19 +123,19 @@
         btn.className = "map-btn";
 
         btn.innerHTML =
-          `<span class="letter">${letter}</span>` +
-          `<span class="count">${freq[letter]}</span>` +
-          `<span class="arrow">→</span>` +
-          `<span class="target">${mapping[letter] || "_"}</span>`;
+          '<span class="letter">' + letter + '</span>' +
+          '<span class="count">' + freq[letter] + '</span>' +
+          '<span class="arrow">→</span>' +
+          '<span class="target">' + (mapping[letter] || "_") + '</span>';
 
         btn.addEventListener("click", () => {
           const current = mapping[letter] || "";
-          const input = prompt(
-            \`Replace ${letter} with (leave empty to clear):\`,
-            current
-          );
+          const promptMsg = "Replace " + letter + " with (leave empty to clear):";
+          const input = window.prompt(promptMsg, current);
 
-          if (input === null) return;
+          if (input === null) {
+            return; // cancelled
+          }
 
           const trimmed = input.trim().toUpperCase();
           const newChar = trimmed[0] || "";
@@ -141,20 +145,26 @@
             mapping[letter] = "";
             renderMappings();
             decodeText();
+            messageEl.textContent = "";
+            messageEl.className = "";
             return;
           }
 
-          // Check for duplicates (prevent same plaintext used twice)
+          // Prevent duplicate substitutions
           const conflict = alphabet.find(
             l => mapping[l] === newChar && l !== letter
           );
 
           if (conflict) {
-            const ok = confirm(
-              \`'${newChar}' is already used for '${conflict}'.\\nUse it for '${letter}' instead?\`
-            );
-            if (!ok) return;
-
+            const confirmMsg =
+              "'" + newChar + "' is already used as a substitution for '" +
+              conflict + "'.\nUse it for '" + letter +
+              "' instead and clear it from '" + conflict + "'?";
+            const ok = window.confirm(confirmMsg);
+            if (!ok) {
+              return;
+            }
+            // Clear conflicting mapping
             mapping[conflict] = "";
           }
 
@@ -162,20 +172,22 @@
 
           renderMappings();
           decodeText();
+          messageEl.textContent = "";
+          messageEl.className = "";
         });
 
         mappingsEl.appendChild(btn);
       });
 
       // Frequency view (sorted by descending frequency)
-      const sortedFreq = usedLetters.slice().sort((a, b) => freq[b] - freq[a]);
+      const sortedFreqLetters = usedLetters.slice().sort((a, b) => freq[b] - freq[a]);
 
-      sortedFreq.forEach(letter => {
+      sortedFreqLetters.forEach(letter => {
         const div = document.createElement("div");
         div.className = "freq-item";
         div.innerHTML =
-          `<span class="freq-letter">${letter}</span>` +
-          `<span class="freq-count">${freq[letter]}</span>`;
+          '<span class="freq-letter">' + letter + '</span>' +
+          '<span class="freq-count">' + freq[letter] + '</span>';
         freqViewEl.appendChild(div);
       });
     }
@@ -203,9 +215,9 @@
 
       cipherEl.textContent = cipherText;
       messageEl.textContent =
-        solutionText ?
-          "Message loaded. Start mapping letters or check the solution." :
-          "Message loaded. Start mapping letters.";
+        solutionText
+          ? "Message loaded. Start mapping letters or tap 'Check Solution' when ready."
+          : "Message loaded. Start mapping letters.";
       messageEl.className = "";
 
       resetMappings();
@@ -231,10 +243,10 @@
         .toUpperCase();
 
       if (guess === target && guess.length > 0) {
-        messageEl.textContent = "🎉 Correct! You solved it!";
+        messageEl.textContent = "🎉 Correct! You solved the cipher.";
         messageEl.className = "ok";
       } else {
-        messageEl.textContent = "Not quite yet—keep trying!";
+        messageEl.textContent = "Not quite yet. Keep trying!";
         messageEl.className = "err";
       }
     });
@@ -245,7 +257,7 @@
       messageEl.className = "";
     });
 
-    // Initial empty render
+    // Initial render (no message yet)
     renderMappings();
     decodeText();
   </script>
