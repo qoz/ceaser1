@@ -143,44 +143,51 @@
     let puzzles      = [];
     let currentHint  = null;
     let isPuzzleLoaded = false;  // track whether current content came from a puzzle
+    let currentFontMode = "default";
 
     // Mapping dictionary: cipher letter -> guessed plaintext letter
     const mapping = {};
     alphabet.forEach(function (l) { mapping[l] = ""; });
 
     // ----- Text display options -----
-    fontSelect.addEventListener("change", function () {
-      var value = fontSelect.value;
+    function applyFontMode() {
+      const elements = [
+        cipherEl,
+        plainEl,
+        mappingsEl,
+        freqViewEl,
+        // all mapping buttons and their contents
+        ...mappingsEl.querySelectorAll("*"),
+        // all frequency view items and their contents
+        ...freqViewEl.querySelectorAll("*")
+      ];
 
-      // Reset overrides for all relevant areas
-      [cipherEl, plainEl, mappingsEl, freqViewEl].forEach(function (el) {
+      elements.forEach(function (el) {
         el.style.fontFamily    = "";
         el.style.fontSize      = "";
         el.style.letterSpacing = "";
       });
 
-      if (value === "serif") {
-        [cipherEl, plainEl, mappingsEl, freqViewEl].forEach(function (el) {
-          el.style.fontFamily = "serif";
-        });
-      } else if (value === "sans") {
-        [cipherEl, plainEl, mappingsEl, freqViewEl].forEach(function (el) {
-          el.style.fontFamily = "Arial, sans-serif";
-        });
-      } else if (value === "mono") {
-        [cipherEl, plainEl, mappingsEl, freqViewEl].forEach(function (el) {
-          el.style.fontFamily = "monospace";
-        });
-      } else if (value === "large") {
-        [cipherEl, plainEl, mappingsEl, freqViewEl].forEach(function (el) {
-          el.style.fontSize = "1.6em";
-        });
-      } else if (value === "spaced") {
-        [cipherEl, plainEl, mappingsEl, freqViewEl].forEach(function (el) {
-          el.style.letterSpacing = "0.25em";
-        });
+      if (currentFontMode === "default") {
+        return; // let CSS handle it
       }
-      // "default" falls through to CSS defaults
+
+      if (currentFontMode === "serif") {
+        elements.forEach(function (el) { el.style.fontFamily = "serif"; });
+      } else if (currentFontMode === "sans") {
+        elements.forEach(function (el) { el.style.fontFamily = "Arial, sans-serif"; });
+      } else if (currentFontMode === "mono") {
+        elements.forEach(function (el) { el.style.fontFamily = "monospace"; });
+      } else if (currentFontMode === "large") {
+        elements.forEach(function (el) { el.style.fontSize = "1.6em"; });
+      } else if (currentFontMode === "spaced") {
+        elements.forEach(function (el) { el.style.letterSpacing = "0.25em"; });
+      }
+    }
+
+    fontSelect.addEventListener("change", function () {
+      currentFontMode = fontSelect.value;
+      applyFontMode();
     });
 
     // ----- Core functions -----
@@ -215,6 +222,7 @@
         }
       }
       plainEl.innerHTML = decoded;
+      applyFontMode(); // ensure decryption text respects current font
     }
 
     function renderMappings() {
@@ -222,6 +230,7 @@
       freqViewEl.innerHTML = "";
 
       if (!cipherText) {
+        applyFontMode();
         return;
       }
 
@@ -321,6 +330,8 @@
           '<span class="freq-count">' + freq[letter] + '</span>';
         freqViewEl.appendChild(div);
       });
+
+      applyFontMode(); // newly created buttons/items get current font
     }
 
     function resetMappings() {
@@ -362,6 +373,8 @@
       if (!cipherText) {
         messageEl.textContent = "Selected puzzle has no cipher text.";
         messageEl.className   = "err";
+        renderMappings();
+        decodeText();
         return;
       }
 
@@ -370,6 +383,7 @@
       messageEl.className = "";
 
       resetMappings();
+      applyFontMode();
     }
 
     function applyPuzzleData(data) {
@@ -441,12 +455,16 @@
       if (value === "") {
         setHintInfo(null);
         isPuzzleLoaded = false;
+        renderMappings();
+        decodeText();
         return;
       }
       var index = parseInt(value, 10);
       if (isNaN(index) || !puzzles[index]) {
         setHintInfo(null);
         isPuzzleLoaded = false;
+        renderMappings();
+        decodeText();
         return;
       }
       loadPuzzleIntoGame(puzzles[index]);
@@ -523,6 +541,7 @@
         plainEl.textContent   = "";
         freqViewEl.innerHTML  = "";
         mappingsEl.innerHTML  = "";
+        applyFontMode();
         return;
       }
 
@@ -535,6 +554,7 @@
       messageEl.className = "";
 
       resetMappings();
+      applyFontMode();
     });
 
     // ----- Check solution -----
@@ -571,6 +591,7 @@
       resetMappings();
       messageEl.textContent = "";
       messageEl.className = "";
+      applyFontMode();
     });
 
     // ----- Mode toggle logic -----
@@ -626,6 +647,7 @@
     renderMappings();
     decodeText();
     autoLoadPuzzlesFromServer();
+    applyFontMode();
 
     // Default mode: puzzle list
     modePuzzleRadio.checked = true;
