@@ -15,6 +15,14 @@
       "solution": "THIS IS A MESSAGE",
       "hint": { "cipher": "U", "plain": "T" },
       "publishDate": "2025-02-01"
-    }
+    },
+    {
+      "id": "p3",
+      "title": "11-30-2025",
+      "cipher": "NQD SARNAVJOARQDS MONQTZ TC CMVNMRE VTXDBR QMRV'N YZANNDV MVENQAVJ AV RDXDZMB EDMZR. QD'R MN M BTRR CTZ YTZBSR",
+      "solution": "",
+      "hint": { "cipher": "Q", "plain": "H" },
+      "publishDate": "2025-11-30"
+      }
   ]
 }
