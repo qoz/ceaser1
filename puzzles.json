@@ -23,6 +23,14 @@
       "solution": "",
       "hint": { "cipher": "Q", "plain": "H" },
       "publishDate": "2025-11-30"
-      }
+      },
+    {
+      "id": "p4",
+      "title": "11-xx-2025",
+      "cipher": "UCZCV INVWV, FA SZI, QVLQSV JXUC FV SDODKM IDCN ZC SVZUC LKV ZKDJZS UXEN ZU Z PLM, EZC LW FDWP: QVCUASOZKDZ.",
+      "solution": "",
+      "hint": { "cipher": "Q", "plain": "P" },
+      "publishDate": "2025-11-xx"
+    }
   ]
 }
