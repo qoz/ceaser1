@@ -151,37 +151,40 @@
 
     // ----- Text display options -----
     function applyFontMode() {
-      const elements = [
-        cipherEl,
-        plainEl,
+      // Separate "text" vs "UI" elements so Large Print can treat them differently
+      const textElements = [cipherEl, plainEl];
+      const uiElements = [
         mappingsEl,
         freqViewEl,
-        // all mapping buttons and their contents
         ...mappingsEl.querySelectorAll("*"),
-        // all frequency view items and their contents
         ...freqViewEl.querySelectorAll("*")
       ];
 
-      elements.forEach(function (el) {
+      const allElements = [...textElements, ...uiElements];
+
+      // Reset styles
+      allElements.forEach(function (el) {
         el.style.fontFamily    = "";
         el.style.fontSize      = "";
         el.style.letterSpacing = "";
       });
 
       if (currentFontMode === "default") {
-        return; // let CSS handle it
+        return; // let CSS control everything
       }
 
       if (currentFontMode === "serif") {
-        elements.forEach(function (el) { el.style.fontFamily = "serif"; });
+        allElements.forEach(function (el) { el.style.fontFamily = "serif"; });
       } else if (currentFontMode === "sans") {
-        elements.forEach(function (el) { el.style.fontFamily = "Arial, sans-serif"; });
+        allElements.forEach(function (el) { el.style.fontFamily = "Arial, sans-serif"; });
       } else if (currentFontMode === "mono") {
-        elements.forEach(function (el) { el.style.fontFamily = "monospace"; });
+        allElements.forEach(function (el) { el.style.fontFamily = "monospace"; });
       } else if (currentFontMode === "large") {
-        elements.forEach(function (el) { el.style.fontSize = "1.6em"; });
+        // Big for text, smaller for UI
+        textElements.forEach(function (el) { el.style.fontSize = "1.6em"; });
+        uiElements.forEach(function (el) { el.style.fontSize = "0.8em"; });
       } else if (currentFontMode === "spaced") {
-        elements.forEach(function (el) { el.style.letterSpacing = "0.25em"; });
+        allElements.forEach(function (el) { el.style.letterSpacing = "0.25em"; });
       }
     }
 
