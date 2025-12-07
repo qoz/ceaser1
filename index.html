@@ -25,6 +25,7 @@
 
   <!-- Puzzle-based play (JSON puzzles + dev mode) -->
   <div id="puzzleModeSection">
+    <!-- Puzzle loading section -->
     <div class="section">
       <div class="label">Load puzzles from file (JSON):</div>
       <input type="file" id="puzzleFileInput" accept=".json,application/json,text/plain" />
@@ -37,6 +38,7 @@
       <div id="hintInfo" class="label" style="margin-top:6px; text-align:center;"></div>
     </div>
 
+    <!-- Dev mode toggle -->
     <div class="section">
       <label class="label">
         <input type="checkbox" id="devMode" />
@@ -47,6 +49,7 @@
 
   <!-- Manual entry play -->
   <div id="manualModeSection">
+    <!-- Manual entry section -->
     <div class="section">
       <div class="label">Enter encrypted message manually:</div>
       <textarea id="cipherInput" placeholder="Paste or type the encrypted text here..."></textarea>
@@ -61,7 +64,7 @@
     </div>
   </div>
 
-  <!-- ⭐ Text display options -->
+  <!-- Text display options -->
   <div class="section">
     <div class="label">Text display options:</div>
     <select id="fontSelect">
@@ -133,24 +136,27 @@
     const puzzleModeSection = document.getElementById("puzzleModeSection");
     const manualModeSection = document.getElementById("manualModeSection");
 
-    const fontSelect = document.getElementById("fontSelect");
+    const fontSelect        = document.getElementById("fontSelect");
 
     let cipherText   = "";
     let solutionText = "";
     let puzzles      = [];
     let currentHint  = null;
-    let isPuzzleLoaded = false;
+    let isPuzzleLoaded = false;  // track whether current content came from a puzzle
 
-    // ---------------------------
-    // FONT STYLE HANDLING
-    // ---------------------------
+    // Mapping dictionary: cipher letter -> guessed plaintext letter
+    const mapping = {};
+    alphabet.forEach(function (l) { mapping[l] = ""; });
+
+    // ----- Text display options -----
     fontSelect.addEventListener("change", function () {
-      const value = fontSelect.value;
+      var value = fontSelect.value;
 
-      cipherEl.style.fontFamily = "";
-      plainEl.style.fontFamily  = "";
-      cipherEl.style.fontSize   = "";
-      plainEl.style.fontSize    = "";
+      // Reset overrides
+      cipherEl.style.fontFamily    = "";
+      plainEl.style.fontFamily     = "";
+      cipherEl.style.fontSize      = "";
+      plainEl.style.fontSize       = "";
       cipherEl.style.letterSpacing = "";
       plainEl.style.letterSpacing  = "";
 
@@ -170,29 +176,36 @@
         cipherEl.style.letterSpacing = "0.25em";
         plainEl.style.letterSpacing  = "0.25em";
       }
-      // default = no changes (CSS controls appearance)
+      // "default" falls through to CSS defaults
     });
 
-    // ---------------------------
-    // FREQUENCY + MAPPING LOGIC
-    // ---------------------------
+    // ----- Core functions -----
 
     function computeFrequencies() {
-      const freq = {};
-      alphabet.forEach(l => freq[l] = 0);
-      for (const ch of cipherText.toUpperCase()) {
-        if (alphabet.includes(ch)) freq[ch]++;
+      var freq = {};
+      alphabet.forEach(function (l) { freq[l] = 0; });
+      for (var i = 0; i < cipherText.length; i++) {
+        var ch = cipherText[i].toUpperCase();
+        if (alphabet.indexOf(ch) !== -1) {
+          freq[ch] = freq[ch] + 1;
+        }
       }
       return freq;
     }
 
+    // Shows thin-spaced underscores for unknown letters
     function decodeText() {
-      let decoded = "";
-      for (const ch of cipherText) {
-        const up = ch.toUpperCase();
-        if (alphabet.includes(up)) {
-          const rep = mapping[up];
-          decoded += rep ? rep : "_&#8201;";
+      var decoded = "";
+      for (var i = 0; i < cipherText.length; i++) {
+        var ch = cipherText[i];
+        var up = ch.toUpperCase();
+        if (alphabet.indexOf(up) !== -1) {
+          var rep = mapping[up];
+          if (rep) {
+            decoded += rep;
+          } else {
+            decoded += "_&#8201;";  // underscore + thin space
+          }
         } else {
           decoded += ch;
         }
@@ -204,31 +217,42 @@
       mappingsEl.innerHTML = "";
       freqViewEl.innerHTML = "";
 
-      if (!cipherText) return;
+      if (!cipherText) {
+        return;
+      }
 
-      const freq = computeFrequencies();
-      const usedLetters = Object.keys(freq).filter(l => freq[l] > 0).sort();
+      var freq = computeFrequencies();
+      var usedLetters = [];
+      for (var l in freq) {
+        if (freq.hasOwnProperty(l) && freq[l] > 0) {
+          usedLetters.push(l);
+        }
+      }
+      usedLetters.sort();
 
-      usedLetters.forEach(letter => {
-        const btn = document.createElement("button");
+      // Mapping buttons
+      usedLetters.forEach(function (letter) {
+        var btn = document.createElement("button");
         btn.className = "map-btn";
+
         btn.innerHTML =
-          `<span class="letter">${letter}</span>
-           <span class="count">${freq[letter]}</span>
-           <span class="arrow">→</span>
-           <span class="target">${mapping[letter] || "_"}</span>`;
+          '<span class="letter">' + letter + '</span>' +
+          '<span class="count">' + freq[letter] + '</span>' +
+          '<span class="arrow">→</span>' +
+          '<span class="target">' + (mapping[letter] || "_") + '</span>';
 
         btn.addEventListener("click", function () {
-          const current = mapping[letter] || "";
-          const input = window.prompt(
-            "Replace " + letter + " with (leave empty to clear):",
-            current
-          );
-          if (input === null) return;
+          var current = mapping[letter] || "";
+          var promptMsg = "Replace " + letter + " with (leave empty to clear):";
+          var input = window.prompt(promptMsg, current);
 
-          const trimmed = input.trim().toUpperCase();
+          if (input === null) {
+            return; // cancelled
+          }
 
-          // Clearing
+          var trimmed = input.trim().toUpperCase();
+
+          // Clearing substitution
           if (trimmed === "") {
             mapping[letter] = "";
             renderMappings();
@@ -238,29 +262,39 @@
             return;
           }
 
-          // SANITIZATION: exactly one A–Z letter
+          // SANITIZATION: Must be exactly one letter A–Z
           if (!/^[A-Z]$/.test(trimmed)) {
             alert("Please enter exactly one letter (A–Z).");
             return;
           }
 
-          const newChar = trimmed;
+          var newChar = trimmed;
 
-          // Check duplicate
-          const conflict = alphabet.find(l =>
-            mapping[l] === newChar && l !== letter
-          );
+          // Prevent duplicate substitutions
+          var conflict = null;
+          for (var i = 0; i < alphabet.length; i++) {
+            var al = alphabet[i];
+            if (mapping[al] === newChar && al !== letter) {
+              conflict = al;
+              break;
+            }
+          }
 
           if (conflict) {
-            const ok = window.confirm(
-              "'" + newChar + "' is already used for '" +
-              conflict + "'. Move it to '" + letter + "'?"
-            );
-            if (!ok) return;
+            var confirmMsg =
+              "'" + newChar + "' is already used as a substitution for '" +
+              conflict + "'. Use it for '" + letter +
+              "' instead and clear it from '" + conflict + "'?";
+            var ok = window.confirm(confirmMsg);
+            if (!ok) {
+              return;
+            }
+            // Clear conflicting mapping
             mapping[conflict] = "";
           }
 
           mapping[letter] = newChar;
+
           renderMappings();
           decodeText();
           messageEl.textContent = "";
@@ -270,34 +304,39 @@
         mappingsEl.appendChild(btn);
       });
 
-      const sortedFreq = usedLetters.slice().sort((a, b) => freq[b] - freq[a]);
-      sortedFreq.forEach(letter => {
-        const div = document.createElement("div");
+      // Frequency view (sorted by descending frequency)
+      var sortedFreqLetters = usedLetters.slice().sort(function (a, b) {
+        return freq[b] - freq[a];
+      });
+
+      sortedFreqLetters.forEach(function (letter) {
+        var div = document.createElement("div");
         div.className = "freq-item";
         div.innerHTML =
-          `<span class="freq-letter">${letter}</span>
-           <span class="freq-count">${freq[letter]}</span>`;
+          '<span class="freq-letter">' + letter + '</span>' +
+          '<span class="freq-count">' + freq[letter] + '</span>';
         freqViewEl.appendChild(div);
       });
     }
 
     function resetMappings() {
-      alphabet.forEach(l => mapping[l] = "");
+      alphabet.forEach(function (l) { mapping[l] = ""; });
       renderMappings();
       decodeText();
     }
 
     function setHintInfo(hint) {
       currentHint = hint || null;
-      hintInfo.textContent =
-        (currentHint && currentHint.cipher && currentHint.plain)
-        ? `Hint: ${currentHint.cipher} → ${currentHint.plain} (use 'Apply Hint').`
-        : "";
+      if (currentHint && currentHint.cipher && currentHint.plain) {
+        var c = String(currentHint.cipher).toUpperCase();
+        var p = String(currentHint.plain).toUpperCase();
+        hintInfo.textContent = "Hint: " + c + " → " + p + " (use 'Apply Hint').";
+      } else {
+        hintInfo.textContent = "";
+      }
     }
 
-    // ---------------------------
-    // PUZZLE LOAD LOGIC
-    // ---------------------------
+    // ----- Puzzle loading -----
 
     function loadPuzzleIntoGame(puzzle) {
       cipherText   = puzzle.cipher || "";
@@ -307,30 +346,32 @@
       cipherEl.textContent = cipherText;
       cipherInput.value    = cipherText;
 
-      solutionInput.value = devModeCheckbox.checked
-        ? solutionText
-        : "";
+      // Only reveal solution in dev mode
+      if (devModeCheckbox.checked) {
+        solutionInput.value = solutionText;
+      } else {
+        solutionInput.value = "";
+      }
 
       setHintInfo(puzzle.hint);
 
       if (!cipherText) {
         messageEl.textContent = "Selected puzzle has no cipher text.";
-        messageEl.className = "err";
+        messageEl.className   = "err";
         return;
       }
 
-      messageEl.textContent =
-        (puzzle.publishDate ? "Publish date: " + puzzle.publishDate + ". " : "") +
-        "Puzzle loaded. Start mapping letters or apply the hint.";
+      var dateText = puzzle.publishDate ? "Publish date: " + puzzle.publishDate + ". " : "";
+      messageEl.textContent = dateText + "Puzzle loaded. Start mapping letters or apply the hint.";
       messageEl.className = "";
 
       resetMappings();
     }
 
     function applyPuzzleData(data) {
-      if (Array.isArray(data)) {
+      if (Object.prototype.toString.call(data) === "[object Array]") {
         puzzles = data;
-      } else if (data && Array.isArray(data.puzzles)) {
+      } else if (data && Object.prototype.toString.call(data.puzzles) === "[object Array]") {
         puzzles = data.puzzles;
       } else {
         puzzles = [];
@@ -345,34 +386,46 @@
       }
 
       puzzleSelect.innerHTML = '<option value="">(Choose a puzzle)</option>';
-
-      puzzles.forEach((p, i) => {
-        const opt = document.createElement("option");
-        opt.value = i;
-        opt.textContent =
-          (p.title || ("Puzzle " + (i + 1))) +
-          (p.publishDate ? " (" + p.publishDate + ")" : "");
+      for (var i = 0; i < puzzles.length; i++) {
+        var p = puzzles[i];
+        var opt = document.createElement("option");
+        var title = p.title || ("Puzzle " + (i + 1));
+        var date  = p.publishDate ? (" (" + p.publishDate + ")") : "";
+        opt.value = String(i);
+        opt.textContent = title + date;
         puzzleSelect.appendChild(opt);
-      });
+      }
 
       setHintInfo(null);
     }
 
     puzzleFileInput.addEventListener("change", function (e) {
-      const file = e.target.files?.[0];
-      if (!file) return;
+      var file = e.target.files && e.target.files[0];
+      if (!file) {
+        return;
+      }
 
-      const reader = new FileReader();
+      var reader = new FileReader();
       reader.onload = function () {
         try {
-          applyPuzzleData(JSON.parse(reader.result));
-          messageEl.textContent = puzzles.length
-            ? "Puzzles loaded from file. Choose one."
-            : "No puzzles found.";
-          messageEl.className = puzzles.length ? "" : "err";
+          var text = reader.result;
+          var data = JSON.parse(text);
 
-        } catch {
-          messageEl.textContent = "Invalid puzzles file (not JSON).";
+          applyPuzzleData(data);
+
+          if (puzzles.length) {
+            messageEl.textContent = "Puzzles loaded from file. Choose one from the dropdown.";
+            messageEl.className = "";
+          } else {
+            messageEl.textContent = "No puzzles found in file.";
+            messageEl.className = "err";
+          }
+        } catch (err) {
+          console.log(err);
+          puzzles = [];
+          puzzleSelect.innerHTML = '<option value="">(Error reading file)</option>';
+          setHintInfo(null);
+          messageEl.textContent = "Error: invalid puzzles file (not valid JSON).";
           messageEl.className = "err";
         }
       };
@@ -380,19 +433,34 @@
     });
 
     puzzleSelect.addEventListener("change", function () {
-      const idx = puzzleSelect.value;
-      if (idx === "") {
+      var value = puzzleSelect.value;
+      if (value === "") {
         setHintInfo(null);
         isPuzzleLoaded = false;
         return;
       }
-      loadPuzzleIntoGame(puzzles[Number(idx)]);
+      var index = parseInt(value, 10);
+      if (isNaN(index) || !puzzles[index]) {
+        setHintInfo(null);
+        isPuzzleLoaded = false;
+        return;
+      }
+      loadPuzzleIntoGame(puzzles[index]);
     });
 
     devModeCheckbox.addEventListener("change", function () {
-      if (!isPuzzleLoaded || !cipherText) return;
-      solutionInput.value =
-        devModeCheckbox.checked ? solutionText : "";
+      if (!isPuzzleLoaded) {
+        return;
+      }
+      if (!cipherText) {
+        return;
+      }
+
+      if (devModeCheckbox.checked) {
+        solutionInput.value = solutionText || "";
+      } else {
+        solutionInput.value = "";
+      }
     });
 
     applyHintBtn.addEventListener("click", function () {
@@ -402,65 +470,70 @@
         return;
       }
       if (!currentHint || !currentHint.cipher || !currentHint.plain) {
-        messageEl.textContent = "No hint for this puzzle.";
+        messageEl.textContent = "No hint available for this puzzle.";
         messageEl.className = "err";
         return;
       }
 
-      const C = currentHint.cipher.toUpperCase();
-      const P = currentHint.plain.toUpperCase();
+      var cipherLetter = String(currentHint.cipher).toUpperCase();
+      var plainLetter  = String(currentHint.plain).toUpperCase();
 
-      if (!alphabet.includes(C) || !alphabet.includes(P)) {
-        messageEl.textContent = "Invalid hint (A–Z only).";
+      if (alphabet.indexOf(cipherLetter) === -1 || alphabet.indexOf(plainLetter) === -1) {
+        messageEl.textContent = "Hint is invalid (must be A–Z).";
         messageEl.className = "err";
         return;
       }
 
-      const conflict = alphabet.find(l =>
-        mapping[l] === P && l !== C
-      );
+      var conflict = null;
+      for (var i = 0; i < alphabet.length; i++) {
+        var al = alphabet[i];
+        if (mapping[al] === plainLetter && al !== cipherLetter) {
+          conflict = al;
+          break;
+        }
+      }
+      if (conflict) {
+        mapping[conflict] = "";
+      }
 
-      if (conflict) mapping[conflict] = "";
-      mapping[C] = P;
+      mapping[cipherLetter] = plainLetter;
 
       renderMappings();
       decodeText();
-      messageEl.textContent = `Hint applied: ${C} → ${P}.`;
+      messageEl.textContent = "Hint applied: " + cipherLetter + " → " + plainLetter + ".";
       messageEl.className = "";
     });
 
-    // ---------------------------
-    // MANUAL LOAD
-    // ---------------------------
+    // ----- Manual load -----
 
     loadBtn.addEventListener("click", function () {
-      cipherText   = cipherInput.value.trim();
-      solutionText = solutionInput.value.trim();
+      cipherText   = (cipherInput.value || "").trim();
+      solutionText = (solutionInput.value || "").trim();
       setHintInfo(null);
-      isPuzzleLoaded = false;
+      isPuzzleLoaded = false; // manual entry
 
       if (!cipherText) {
         messageEl.textContent = "Please enter an encrypted message.";
-        messageEl.className = "err";
-        cipherEl.textContent = "";
-        plainEl.textContent = "";
-        freqViewEl.innerHTML = "";
-        mappingsEl.innerHTML = "";
+        messageEl.className   = "err";
+        cipherEl.textContent  = "";
+        plainEl.textContent   = "";
+        freqViewEl.innerHTML  = "";
+        mappingsEl.innerHTML  = "";
         return;
       }
 
       cipherEl.textContent = cipherText;
-      messageEl.textContent = solutionText
-        ? "Message loaded. Start mapping letters or check solution."
-        : "Message loaded. Start mapping letters.";
+      if (solutionText) {
+        messageEl.textContent = "Message loaded. Start mapping letters or tap 'Check Solution' when ready.";
+      } else {
+        messageEl.textContent = "Message loaded. Start mapping letters.";
+      }
       messageEl.className = "";
 
       resetMappings();
     });
 
-    // ---------------------------
-    // CHECK SOLUTION
-    // ---------------------------
+    // ----- Check solution -----
 
     checkBtn.addEventListener("click", function () {
       if (!cipherText) {
@@ -468,14 +541,15 @@
         messageEl.className = "err";
         return;
       }
+
       if (!solutionText) {
-        messageEl.textContent = "No solution text available.";
+        messageEl.textContent = "No solution text provided.";
         messageEl.className = "err";
         return;
       }
 
-      const target = solutionText.replace(/\s+/g, "").toUpperCase();
-      const guess = plainEl.textContent
+      var target = solutionText.replace(/\s+/g, "").toUpperCase();
+      var guess = plainEl.textContent
         .replace(/_/g, "")
         .replace(/\s+/g, "")
         .toUpperCase();
@@ -484,7 +558,7 @@
         messageEl.textContent = "🎉 Correct! You solved the cipher.";
         messageEl.className = "ok";
       } else {
-        messageEl.textContent = "Not quite yet.";
+        messageEl.textContent = "Not quite yet. Keep trying!";
         messageEl.className = "err";
       }
     });
@@ -495,10 +569,7 @@
       messageEl.className = "";
     });
 
-
-    // ---------------------------
-    // MODE TOGGLE
-    // ---------------------------
+    // ----- Mode toggle logic -----
 
     function setMode(mode) {
       if (mode === "manual") {
@@ -510,38 +581,49 @@
       }
     }
 
-    modePuzzleRadio.addEventListener("change", () => {
-      if (modePuzzleRadio.checked) setMode("puzzle");
+    modePuzzleRadio.addEventListener("change", function () {
+      if (modePuzzleRadio.checked) {
+        setMode("puzzle");
+      }
     });
 
-    modeManualRadio.addEventListener("change", () => {
-      if (modeManualRadio.checked) setMode("manual");
+    modeManualRadio.addEventListener("change", function () {
+      if (modeManualRadio.checked) {
+        setMode("manual");
+      }
     });
 
-    // ---------------------------
-    // AUTO-LOAD puzzles.json
-    // ---------------------------
+    // ----- Auto-load puzzles.json -----
 
     function autoLoadPuzzlesFromServer() {
-      if (typeof fetch !== "function") return;
-
+      if (typeof fetch !== "function") {
+        return;
+      }
       fetch("puzzles.json")
-        .then(r => r.ok ? r.json() : Promise.reject())
-        .then(data => {
+        .then(function (response) {
+          if (!response.ok) {
+            throw new Error("HTTP " + response.status);
+          }
+          return response.json();
+        })
+        .then(function (data) {
           applyPuzzleData(data);
           if (puzzles.length) {
-            messageEl.textContent = "Puzzles loaded from server. Choose one.";
+            messageEl.textContent = "Puzzles loaded from server. Choose one from the dropdown.";
             messageEl.className = "";
           }
         })
-        .catch(() => {});
+        .catch(function () {
+          // Silent fail: user can still load puzzles via file input or manual text
+        });
     }
 
-    // Initial
+    // Initial render
     renderMappings();
     decodeText();
     autoLoadPuzzlesFromServer();
 
+    // Default mode: puzzle list
     modePuzzleRadio.checked = true;
     modeManualRadio.checked = false;
     setMode("puzzle");
