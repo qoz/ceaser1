@@ -151,7 +151,7 @@
 
     // ----- Text display options -----
     function applyFontMode() {
-      // Separate "text" vs "UI" elements so Large Print can treat them differently
+      // Main text vs UI
       const textElements = [cipherEl, plainEl];
       const uiElements = [
         mappingsEl,
@@ -159,7 +159,6 @@
         ...mappingsEl.querySelectorAll("*"),
         ...freqViewEl.querySelectorAll("*")
       ];
-
       const allElements = [...textElements, ...uiElements];
 
       // Reset styles
@@ -170,21 +169,34 @@
       });
 
       if (currentFontMode === "default") {
-        return; // let CSS control everything
+        return; // let CSS handle everything
       }
 
       if (currentFontMode === "serif") {
-        allElements.forEach(function (el) { el.style.fontFamily = "serif"; });
+        allElements.forEach(function (el) {
+          el.style.fontFamily = "serif";
+        });
       } else if (currentFontMode === "sans") {
-        allElements.forEach(function (el) { el.style.fontFamily = "Arial, sans-serif"; });
+        allElements.forEach(function (el) {
+          el.style.fontFamily = "Arial, sans-serif";
+        });
       } else if (currentFontMode === "mono") {
-        allElements.forEach(function (el) { el.style.fontFamily = "monospace"; });
+        allElements.forEach(function (el) {
+          el.style.fontFamily = "monospace";
+        });
       } else if (currentFontMode === "large") {
-        // Big for text, smaller for UI
-        textElements.forEach(function (el) { el.style.fontSize = "1.6em"; });
-        uiElements.forEach(function (el) { el.style.fontSize = "1.2em"; });
+        // Big for text
+        textElements.forEach(function (el) {
+          el.style.fontSize = "1.6em";
+        });
+        // Medium-large for UI
+        uiElements.forEach(function (el) {
+          el.style.fontSize = "1.2em";
+        });
       } else if (currentFontMode === "spaced") {
-        allElements.forEach(function (el) { el.style.letterSpacing = "0.25em"; });
+        allElements.forEach(function (el) {
+          el.style.letterSpacing = "0.25em";
+        });
       }
     }
 
@@ -225,7 +237,7 @@
         }
       }
       plainEl.innerHTML = decoded;
-      applyFontMode(); // ensure decryption text respects current font
+      applyFontMode(); // keep text in sync with font mode
     }
 
     function renderMappings() {
@@ -334,7 +346,7 @@
         freqViewEl.appendChild(div);
       });
 
-      applyFontMode(); // newly created buttons/items get current font
+      applyFontMode(); // apply font to new UI elements
     }
 
     function resetMappings() {
