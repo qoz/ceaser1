@@ -152,29 +152,33 @@
     fontSelect.addEventListener("change", function () {
       var value = fontSelect.value;
 
-      // Reset overrides
-      cipherEl.style.fontFamily    = "";
-      plainEl.style.fontFamily     = "";
-      cipherEl.style.fontSize      = "";
-      plainEl.style.fontSize       = "";
-      cipherEl.style.letterSpacing = "";
-      plainEl.style.letterSpacing  = "";
+      // Reset overrides for all relevant areas
+      [cipherEl, plainEl, mappingsEl, freqViewEl].forEach(function (el) {
+        el.style.fontFamily    = "";
+        el.style.fontSize      = "";
+        el.style.letterSpacing = "";
+      });
 
       if (value === "serif") {
-        cipherEl.style.fontFamily = "serif";
-        plainEl.style.fontFamily  = "serif";
+        [cipherEl, plainEl, mappingsEl, freqViewEl].forEach(function (el) {
+          el.style.fontFamily = "serif";
+        });
       } else if (value === "sans") {
-        cipherEl.style.fontFamily = "Arial, sans-serif";
-        plainEl.style.fontFamily  = "Arial, sans-serif";
+        [cipherEl, plainEl, mappingsEl, freqViewEl].forEach(function (el) {
+          el.style.fontFamily = "Arial, sans-serif";
+        });
       } else if (value === "mono") {
-        cipherEl.style.fontFamily = "monospace";
-        plainEl.style.fontFamily  = "monospace";
+        [cipherEl, plainEl, mappingsEl, freqViewEl].forEach(function (el) {
+          el.style.fontFamily = "monospace";
+        });
       } else if (value === "large") {
-        cipherEl.style.fontSize = "1.6em";
-        plainEl.style.fontSize  = "1.6em";
+        [cipherEl, plainEl, mappingsEl, freqViewEl].forEach(function (el) {
+          el.style.fontSize = "1.6em";
+        });
       } else if (value === "spaced") {
-        cipherEl.style.letterSpacing = "0.25em";
-        plainEl.style.letterSpacing  = "0.25em";
+        [cipherEl, plainEl, mappingsEl, freqViewEl].forEach(function (el) {
+          el.style.letterSpacing = "0.25em";
+        });
       }
       // "default" falls through to CSS defaults
     });
