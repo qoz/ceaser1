@@ -1,0 +1,20 @@
+{
+  "puzzles": [
+    {
+      "id": "p1",
+      "title": "Hello World Demo",
+      "cipher": "KHOOR ZRUOG",
+      "solution": "HELLO WORLD",
+      "hint": { "cipher": "K", "plain": "H" },
+      "publishDate": "2025-01-01"
+    },
+    {
+      "id": "p2",
+      "title": "Short Example",
+      "cipher": "UIJT JT B NFTTBHF",
+      "solution": "THIS IS A MESSAGE",
+      "hint": { "cipher": "U", "plain": "T" },
+      "publishDate": "2025-02-01"
+    }
+  ]
+}

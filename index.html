@@ -9,18 +9,59 @@
 <body>
   <h1>Caesar Cipher Solver</h1>
 
-  <!-- Manual entry section -->
+  <!-- Play mode toggle -->
   <div class="section">
-    <div class="label">Enter encrypted message:</div>
-    <textarea id="cipherInput" placeholder="Paste or type the encrypted text here..."></textarea>
+    <div class="label">Play mode:</div>
+    <label class="label">
+      <input type="radio" name="playMode" id="modePuzzle" value="puzzle" />
+      Use puzzle list
+    </label>
+    <br />
+    <label class="label">
+      <input type="radio" name="playMode" id="modeManual" value="manual" />
+      Enter puzzle manually
+    </label>
+  </div>
 
-    <div class="label" style="margin-top:8px;">
-      (Optional) Enter known solution text for checking:
+  <!-- Puzzle-based play (JSON puzzles + dev mode) -->
+  <div id="puzzleModeSection">
+    <!-- Puzzle loading section -->
+    <div class="section">
+      <div class="label">Load puzzles from file (JSON):</div>
+      <input type="file" id="puzzleFileInput" accept=".json,application/json,text/plain" />
+
+      <div class="label" style="margin-top:8px;">Choose a puzzle:</div>
+      <select id="puzzleSelect">
+        <option value="">(No puzzles loaded)</option>
+      </select>
+
+      <div id="hintInfo" class="label" style="margin-top:6px; text-align:center;"></div>
     </div>
-    <input id="solutionInput" type="text"
-           placeholder="If you know the plaintext, enter it here for 'Check Solution'..." />
 
-    <button id="loadBtn" class="big-btn">Load Message</button>
+    <!-- Dev mode toggle -->
+    <div class="section">
+      <label class="label">
+        <input type="checkbox" id="devMode" />
+        Developer mode: reveal puzzle solutions
+      </label>
+    </div>
+  </div>
+
+  <!-- Manual entry play -->
+  <div id="manualModeSection">
+    <!-- Manual entry section -->
+    <div class="section">
+      <div class="label">Enter encrypted message manually:</div>
+      <textarea id="cipherInput" placeholder="Paste or type the encrypted text here..."></textarea>
+
+      <div class="label" style="margin-top:8px;">
+        (Optional) Enter known solution text for checking:
+      </div>
+      <input id="solutionInput" type="text"
+             placeholder="If you know the plaintext, enter it here for 'Check Solution'..." />
+
+      <button id="loadBtn" class="big-btn">Load Message</button>
+    </div>
   </div>
 
   <!-- Encrypted text display -->
@@ -49,6 +90,7 @@
 
   <!-- Controls -->
   <div class="controls">
+    <button id="applyHintBtn" class="big-btn secondary">Apply Hint</button>
     <button id="checkBtn" class="big-btn">Check Solution</button>
     <button id="clearBtn" class="big-btn secondary">Clear Mappings</button>
   </div>
@@ -70,8 +112,22 @@
     const solutionInput = document.getElementById("solutionInput");
     const freqViewEl    = document.getElementById("freqView");
 
+    const puzzleFileInput = document.getElementById("puzzleFileInput");
+    const puzzleSelect    = document.getElementById("puzzleSelect");
+    const hintInfo        = document.getElementById("hintInfo");
+    const applyHintBtn    = document.getElementById("applyHintBtn");
+    const devModeCheckbox = document.getElementById("devMode");
+
+    const modePuzzleRadio = document.getElementById("modePuzzle");
+    const modeManualRadio = document.getElementById("modeManual");
+    const puzzleModeSection = document.getElementById("puzzleModeSection");
+    const manualModeSection = document.getElementById("manualModeSection");
+
     let cipherText   = "";
     let solutionText = "";
+    let puzzles      = [];
+    let currentHint  = null;
+    let isPuzzleLoaded = false;  // track whether current content came from a puzzle
 
     // Mapping dictionary: cipher letter -> guessed plaintext letter
     const mapping = {};
@@ -88,7 +144,7 @@
       return freq;
     }
 
-    // UPDATED: use thin-space between placeholder underscores
+    // Shows thin-spaced underscores for unknown letters
     function decodeText() {
       let decoded = "";
 
@@ -99,15 +155,13 @@
           if (rep) {
             decoded += rep;
           } else {
-            // underscore + thin space (HTML entity)
-            decoded += "_&#8201;";
+            decoded += "_&#8201;";  // underscore + thin space
           }
         } else {
           decoded += ch;
         }
       }
 
-      // use innerHTML so the thin-space entity is rendered
       plainEl.innerHTML = decoded;
     }
 
@@ -209,10 +263,192 @@
       decodeText();
     }
 
-    // Load message manually
+    function setHintInfo(hint) {
+      currentHint = hint || null;
+      if (currentHint && currentHint.cipher && currentHint.plain) {
+        var c = String(currentHint.cipher).toUpperCase();
+        var p = String(currentHint.plain).toUpperCase();
+        hintInfo.textContent = "Hint: " + c + " → " + p + " (use 'Apply Hint').";
+      } else {
+        hintInfo.textContent = "";
+      }
+    }
+
+    function loadPuzzleIntoGame(puzzle) {
+      cipherText   = puzzle.cipher || "";
+      solutionText = puzzle.solution || "";
+      isPuzzleLoaded = true;
+
+      cipherEl.textContent = cipherText;
+      cipherInput.value    = cipherText;
+
+      // Only reveal solution in dev mode
+      if (devModeCheckbox.checked) {
+        solutionInput.value = solutionText;
+      } else {
+        solutionInput.value = "";
+      }
+
+      setHintInfo(puzzle.hint);
+
+      if (!cipherText) {
+        messageEl.textContent = "Selected puzzle has no cipher text.";
+        messageEl.className   = "err";
+        return;
+      }
+
+      var dateText = puzzle.publishDate ? "Publish date: " + puzzle.publishDate + ". " : "";
+      messageEl.textContent = dateText + "Puzzle loaded. Start mapping letters or apply the hint.";
+      messageEl.className = "";
+
+      resetMappings();
+    }
+
+    // Helper: apply puzzle data structure from JSON into UI
+    function applyPuzzleData(data) {
+      // Support either { puzzles: [...] } or [...] at top level
+      if (Array.isArray(data)) {
+        puzzles = data;
+      } else if (data && Array.isArray(data.puzzles)) {
+        puzzles = data.puzzles;
+      } else {
+        puzzles = [];
+      }
+
+      puzzleSelect.innerHTML = "";
+
+      if (!puzzles.length) {
+        puzzleSelect.innerHTML = '<option value="">(No puzzles found)</option>';
+        setHintInfo(null);
+        return;
+      }
+
+      puzzleSelect.innerHTML = '<option value="">(Choose a puzzle)</option>';
+      puzzles.forEach(function (p, index) {
+        const opt = document.createElement("option");
+        const title = p.title || ("Puzzle " + (index + 1));
+        const date  = p.publishDate ? (" (" + p.publishDate + ")") : "";
+        opt.value = String(index);
+        opt.textContent = title + date;
+        puzzleSelect.appendChild(opt);
+      });
+
+      setHintInfo(null);
+    }
+
+    // File loading for puzzles (manual)
+    puzzleFileInput.addEventListener("change", function (e) {
+      const file = e.target.files && e.target.files[0];
+      if (!file) {
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = function () {
+        try {
+          const text = reader.result;
+          let data = JSON.parse(text);
+
+          applyPuzzleData(data);
+
+          if (puzzles.length) {
+            messageEl.textContent = "Puzzles loaded from file. Choose one from the dropdown.";
+            messageEl.className = "";
+          } else {
+            messageEl.textContent = "No puzzles found in file.";
+            messageEl.className = "err";
+          }
+        } catch (err) {
+          console.log(err);
+          puzzles = [];
+          puzzleSelect.innerHTML = '<option value="">(Error reading file)</option>';
+          setHintInfo(null);
+          messageEl.textContent = "Error: invalid puzzles file (not valid JSON).";
+          messageEl.className = "err";
+        }
+      };
+      reader.readAsText(file);
+    });
+
+    // Selecting a puzzle
+    puzzleSelect.addEventListener("change", function () {
+      const value = puzzleSelect.value;
+      if (value === "") {
+        setHintInfo(null);
+        isPuzzleLoaded = false;
+        return;
+      }
+      const index = parseInt(value, 10);
+      if (isNaN(index) || !puzzles[index]) {
+        setHintInfo(null);
+        isPuzzleLoaded = false;
+        return;
+      }
+      loadPuzzleIntoGame(puzzles[index]);
+    });
+
+    // Dev mode toggle: show/hide solution only for loaded puzzles
+    devModeCheckbox.addEventListener("change", function () {
+      if (!isPuzzleLoaded) {
+        return;
+      }
+      if (!cipherText) {
+        return;
+      }
+
+      if (devModeCheckbox.checked) {
+        // Show the solution for the current puzzle
+        solutionInput.value = solutionText || "";
+      } else {
+        // Hide the solution again
+        solutionInput.value = "";
+      }
+    });
+
+    // Apply hint button
+    applyHintBtn.addEventListener("click", function () {
+      if (!cipherText) {
+        messageEl.textContent = "Load a puzzle or message first.";
+        messageEl.className = "err";
+        return;
+      }
+      if (!currentHint || !currentHint.cipher || !currentHint.plain) {
+        messageEl.textContent = "No hint available for this puzzle.";
+        messageEl.className = "err";
+        return;
+      }
+
+      var cipherLetter = String(currentHint.cipher).toUpperCase();
+      var plainLetter  = String(currentHint.plain).toUpperCase();
+
+      if (!alphabet.includes(cipherLetter) || !alphabet.includes(plainLetter)) {
+        messageEl.textContent = "Hint is invalid (must be A–Z).";
+        messageEl.className = "err";
+        return;
+      }
+
+      // Resolve duplicates automatically (hint is trusted)
+      const conflict = alphabet.find(function (l) {
+        return mapping[l] === plainLetter && l !== cipherLetter;
+      });
+      if (conflict) {
+        mapping[conflict] = "";
+      }
+
+      mapping[cipherLetter] = plainLetter;
+
+      renderMappings();
+      decodeText();
+      messageEl.textContent = "Hint applied: " + cipherLetter + " → " + plainLetter + ".";
+      messageEl.className = "";
+    });
+
+    // Manual load (existing behavior)
     loadBtn.addEventListener("click", function () {
       cipherText   = (cipherInput.value || "").trim();
       solutionText = (solutionInput.value || "").trim();
+      setHintInfo(null);
+      isPuzzleLoaded = false; // this is a manual entry, not a JSON puzzle
 
       if (!cipherText) {
         messageEl.textContent = "Please enter an encrypted message.";
@@ -249,7 +485,6 @@
       }
 
       var target = solutionText.replace(/\s+/g, "").toUpperCase();
-      // use textContent here to get the actual characters (underscore + thin space)
       var guess = plainEl.textContent
         .replace(/_/g, "")
         .replace(/\s+/g, "")
@@ -270,9 +505,62 @@
       messageEl.className = "";
     });
 
+    // Mode toggle logic
+    function setMode(mode) {
+      if (mode === "manual") {
+        puzzleModeSection.style.display = "none";
+        manualModeSection.style.display = "";
+      } else {
+        puzzleModeSection.style.display = "";
+        manualModeSection.style.display = "none";
+      }
+    }
+
+    modePuzzleRadio.addEventListener("change", function () {
+      if (modePuzzleRadio.checked) {
+        setMode("puzzle");
+      }
+    });
+
+    modeManualRadio.addEventListener("change", function () {
+      if (modeManualRadio.checked) {
+        setMode("manual");
+      }
+    });
+
+    // Try to auto-load puzzles.json from the same site
+    function autoLoadPuzzlesFromServer() {
+      if (typeof fetch !== "function") {
+        return;
+      }
+      fetch("puzzles.json")
+        .then(function (response) {
+          if (!response.ok) {
+            throw new Error("HTTP " + response.status);
+          }
+          return response.json();
+        })
+        .then(function (data) {
+          applyPuzzleData(data);
+          if (puzzles.length) {
+            messageEl.textContent = "Puzzles loaded from server. Choose one from the dropdown.";
+            messageEl.className = "";
+          }
+        })
+        .catch(function () {
+          // Silent fail: user can still load puzzles via file input or manual text
+        });
+    }
+
     // Initial render (no message yet)
     renderMappings();
     decodeText();
+    autoLoadPuzzlesFromServer();
+
+    // Default mode: puzzle list (if user wants manual, they toggle it)
+    modePuzzleRadio.checked = true;
+    modeManualRadio.checked = false;
+    setMode("puzzle");
   </script>
 </body>
 </html>
