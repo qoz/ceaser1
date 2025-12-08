@@ -229,8 +229,9 @@
           var rep = mapping[up];
           if (rep) {
             decoded += rep;
-          } //else {
+          } else {
             //decoded += "_&#8201;";  // underscore + thin space
+            decoded += "_";
           //}
         } else {
           decoded += ch;
