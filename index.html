@@ -17,6 +17,20 @@
     </label>
   </div>
 
+  <!-- Text display options -->
+  <div class="section">
+    <div class="label">Text display options:</div>
+    <label class="label">
+      <input type="checkbox" id="largePrint" />
+      Large Print
+    </label>
+    <br />
+    <label class="label">
+      <input type="checkbox" id="extraSpacing" />
+      Extra Letter Spacing
+    </label>
+  </div>
+
   <!-- Play mode toggle -->
   <div class="section" id="playModeSection">
     <div class="label">Play mode:</div>
@@ -121,6 +135,8 @@
     const hintInfo        = document.getElementById("hintInfo");
     const applyHintBtn    = document.getElementById("applyHintBtn");
     const devModeCheckbox = document.getElementById("devMode");
+    const largePrintCheckbox = document.getElementById("largePrint");
+    const extraSpacingCheckbox = document.getElementById("extraSpacing");
 
     const modePuzzleRadio = document.getElementById("modePuzzle");
     const modeManualRadio = document.getElementById("modeManual");
@@ -410,6 +426,14 @@
 
     // Dev mode toggle: show/hide advanced sections and reveal solutions
     devModeCheckbox.addEventListener("change", updateDevMode);
+
+    // Text display options
+    largePrintCheckbox.addEventListener("change", function () {
+      document.body.classList.toggle("large-print", largePrintCheckbox.checked);
+    });
+    extraSpacingCheckbox.addEventListener("change", function () {
+      document.body.classList.toggle("extra-spacing", extraSpacingCheckbox.checked);
+    });
 
     // Apply hint button
     applyHintBtn.addEventListener("click", function () {

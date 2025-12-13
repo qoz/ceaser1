@@ -168,3 +168,26 @@ button.big-btn.secondary {
   opacity: 0.8;
   font-size: 0.8rem;
 }
+
+/* Text display options */
+body.large-print .cipher-text,
+body.large-print .plain-text {
+  font-size: 1.6em;
+}
+
+body.large-print .map-btn,
+body.large-print .freq-item,
+body.large-print button.big-btn,
+body.large-print #message {
+  font-size: 1.2em;
+}
+
+body.extra-spacing .cipher-text,
+body.extra-spacing .plain-text,
+body.extra-spacing .map-btn,
+body.extra-spacing .freq-item,
+body.extra-spacing button,
+body.extra-spacing #message,
+body.extra-spacing .label {
+  letter-spacing: 0.1em;
+}
