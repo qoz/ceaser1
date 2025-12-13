@@ -183,12 +183,7 @@ body.large-print #message {
 }
 
 body.extra-spacing .cipher-text,
-body.extra-spacing .plain-text,
-body.extra-spacing .map-btn,
-body.extra-spacing .freq-item,
-body.extra-spacing button,
-body.extra-spacing #message,
-body.extra-spacing .label {
+body.extra-spacing .plain-text {
   letter-spacing: 0.1em;
   font-family: monospace;
 }
