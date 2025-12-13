@@ -190,4 +190,5 @@ body.extra-spacing button,
 body.extra-spacing #message,
 body.extra-spacing .label {
   letter-spacing: 0.1em;
+  font-family: monospace;
 }
