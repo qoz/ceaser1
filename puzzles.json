@@ -5,7 +5,10 @@
       "title": "Hello World Demo",
       "cipher": "KHOOR ZRUOG",
       "solution": "HELLO WORLD",
-      "hint": { "cipher": "K", "plain": "H" },
+      "hint": {
+        "cipher": "K",
+        "plain": "H"
+      },
       "publishDate": "2025-01-01"
     },
     {
@@ -13,8 +16,55 @@
       "title": "Short Example",
       "cipher": "UIJT JT B NFTTBHF",
       "solution": "THIS IS A MESSAGE",
-      "hint": { "cipher": "U", "plain": "T" },
+      "hint": {
+        "cipher": "U",
+        "plain": "T"
+      },
       "publishDate": "2025-02-01"
+    },
+    {
+      "id": "p3",
+      "title": "2025-11-30",
+      "cipher": "NQD SARNAVJOARQDS MONQTZ TC CMVNMRE VTXDBR QMRV'N YZANNDV MVENQAVJ AV RDXDZMB EDMZR. QD'R MN M BTRR CTZ YTZBSR",
+      "solution": "",
+      "hint": {
+        "cipher": "Q",
+        "plain": "H"
+      },
+      "publishDate": "2025-11-30"
+    },
+    {
+      "id": "p4",
+      "title": "2025-11-xx",
+      "cipher": "UCZCV INVWV, FA SZI, QVLQSV JXUC FV SDODKM IDCN ZC SVZUC LKV ZKDJZS UXEN ZU Z PLM, EZC LW FDWP: QVCUASOZKDZ.",
+      "solution": "",
+      "hint": {
+        "cipher": "Q",
+        "plain": "P"
+      },
+      "publishDate": "2025-11-xx"
+    },
+    {
+      "id": "p5",
+      "title": "2025-12-13 quip",
+      "cipher": "NHJHV HXJH XJN EVZTPV HXV ZTQAHWI'N UVJGKAL GVMVUTCVW TS EWVJHX-SWVNXVAKAL CWTGQZHN: MVWPKAH.",
+      "solution": "",
+      "hint": {
+        "cipher": "X",
+        "plain": "H"
+      },
+      "publishDate": "2025-12-13"
+    },
+    {
+      "id": "p6",
+      "title": "2025-12-13 quote",
+      "cipher": "VPTZUOV KTQQUS VHH SPHIVHBJHV RQ SPH IREEUE UD SPH VFQ. HJT GHEUQ.",
+      "solution": "",
+      "hint": {
+        "cipher": "",
+        "plain": ""
+      },
+      "publishDate": "2025-12-13"
     }
   ]
 }
