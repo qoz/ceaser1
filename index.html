@@ -9,8 +9,16 @@
 <body>
   <h1>Caesar Cipher Solver</h1>
 
+  <!-- Developer mode toggle -->
+  <div class="section" id="devModeSection">
+    <label class="label">
+      <input type="checkbox" id="devMode" />
+      Developer mode
+    </label>
+  </div>
+
   <!-- Play mode toggle -->
-  <div class="section">
+  <div class="section" id="playModeSection">
     <div class="label">Play mode:</div>
     <label class="label">
       <input type="radio" name="playMode" id="modePuzzle" value="puzzle" />
@@ -26,9 +34,11 @@
   <!-- Puzzle-based play (JSON puzzles + dev mode) -->
   <div id="puzzleModeSection">
     <!-- Puzzle loading section -->
-    <div class="section">
-      <div class="label">Load puzzles from file (JSON):</div>
-      <input type="file" id="puzzleFileInput" accept=".json,application/json,text/plain" />
+    <div class="section" id="loadPuzzlesSection">
+      <div id="fileInputSection">
+        <div class="label">Load puzzles from file (JSON):</div>
+        <input type="file" id="puzzleFileInput" accept=".json,application/json,text/plain" />
+      </div>
 
       <div class="label" style="margin-top:8px;">Choose a puzzle:</div>
       <select id="puzzleSelect">
@@ -39,13 +49,7 @@
     </div>
 
     <!-- Dev mode toggle -->
-    <div class="section">
-      <label class="label">
-        <input type="checkbox" id="devMode" />
-        Developer mode: reveal puzzle solutions
-      </label>
     </div>
-  </div>
 
   <!-- Manual entry play -->
   <div id="manualModeSection">
@@ -122,6 +126,9 @@
     const modeManualRadio = document.getElementById("modeManual");
     const puzzleModeSection = document.getElementById("puzzleModeSection");
     const manualModeSection = document.getElementById("manualModeSection");
+    const playModeSection = document.getElementById("playModeSection");
+    const loadPuzzlesSection = document.getElementById("loadPuzzlesSection");
+    const fileInputSection = document.getElementById("fileInputSection");
 
     let cipherText   = "";
     let solutionText = "";
@@ -132,6 +139,20 @@
     // Mapping dictionary: cipher letter -> guessed plaintext letter
     const mapping = {};
     alphabet.forEach(function (l) { mapping[l] = ""; });
+
+    function updateDevMode() {
+      const checked = devModeCheckbox.checked;
+      playModeSection.style.display = checked ? "" : "none";
+      fileInputSection.style.display = checked ? "" : "none";
+      // Also, reveal solutions if applicable
+      if (isPuzzleLoaded && cipherText) {
+        if (checked) {
+          solutionInput.value = solutionText || "";
+        } else {
+          solutionInput.value = "";
+        }
+      }
+    }
 
     function computeFrequencies() {
       const freq = {};
@@ -387,23 +408,8 @@
       loadPuzzleIntoGame(puzzles[index]);
     });
 
-    // Dev mode toggle: show/hide solution only for loaded puzzles
-    devModeCheckbox.addEventListener("change", function () {
-      if (!isPuzzleLoaded) {
-        return;
-      }
-      if (!cipherText) {
-        return;
-      }
-
-      if (devModeCheckbox.checked) {
-        // Show the solution for the current puzzle
-        solutionInput.value = solutionText || "";
-      } else {
-        // Hide the solution again
-        solutionInput.value = "";
-      }
-    });
+    // Dev mode toggle: show/hide advanced sections and reveal solutions
+    devModeCheckbox.addEventListener("change", updateDevMode);
 
     // Apply hint button
     applyHintBtn.addEventListener("click", function () {
@@ -562,6 +568,7 @@
     modePuzzleRadio.checked = true;
     modeManualRadio.checked = false;
     setMode("puzzle");
+    updateDevMode();
   </script>
 </body>
 </html>
