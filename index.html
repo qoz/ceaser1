@@ -530,26 +530,27 @@
 
     // Try to auto-load puzzles.json from the same site
     function autoLoadPuzzlesFromServer() {
-      if (typeof fetch !== "function") {
-        return;
-      }
-      fetch("puzzles.json")
-        .then(function (response) {
-          if (!response.ok) {
-            throw new Error("HTTP " + response.status);
+      var xhr = new XMLHttpRequest();
+      xhr.open('GET', 'puzzles.json', true);
+      xhr.onreadystatechange = function () {
+        if (xhr.readyState === 4) {
+          if (xhr.status === 200) {
+            try {
+              var data = JSON.parse(xhr.responseText);
+              applyPuzzleData(data);
+              if (puzzles.length) {
+                messageEl.textContent = "Puzzles loaded from server. Choose one from the dropdown.";
+                messageEl.className = "";
+              }
+            } catch (err) {
+              console.log("Error parsing puzzles.json:", err);
+            }
+          } else {
+            console.log("Failed to load puzzles.json, status:", xhr.status);
           }
-          return response.json();
-        })
-        .then(function (data) {
-          applyPuzzleData(data);
-          if (puzzles.length) {
-            messageEl.textContent = "Puzzles loaded from server. Choose one from the dropdown.";
-            messageEl.className = "";
-          }
-        })
-        .catch(function () {
-          // Silent fail: user can still load puzzles via file input or manual text
-        });
+        }
+      };
+      xhr.send();
     }
 
     // Initial render (no message yet)
