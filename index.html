@@ -181,6 +181,20 @@
       return freq;
     }
 
+    // Render cipher text with highlighting for substituted letters
+    function renderCipherText() {
+      let html = "";
+      for (const ch of cipherText) {
+        const up = ch.toUpperCase();
+        if (alphabet.includes(up) && mapping[up]) {
+          html += '<span class="substituted">' + ch + '</span>';
+        } else {
+          html += ch;
+        }
+      }
+      cipherEl.innerHTML = html;
+    }
+
     // Shows thin-spaced underscores for unknown letters
     function decodeText() {
       let decoded = "";
@@ -244,6 +258,7 @@
           if (!newChar) {
             mapping[letter] = "";
             renderMappings();
+            renderCipherText();
             decodeText();
             messageEl.textContent = "";
             messageEl.className = "";
@@ -271,6 +286,7 @@
           mapping[letter] = newChar;
 
           renderMappings();
+          renderCipherText();
           decodeText();
           messageEl.textContent = "";
           messageEl.className = "";
@@ -297,6 +313,7 @@
     function resetMappings() {
       alphabet.forEach(function (l) { mapping[l] = ""; });
       renderMappings();
+      renderCipherText();
       decodeText();
     }
 
@@ -339,6 +356,7 @@
       messageEl.className = "";
 
       resetMappings();
+      renderCipherText();
     }
 
     // Helper: apply puzzle data structure from JSON into UI
@@ -468,6 +486,7 @@
       mapping[cipherLetter] = plainLetter;
 
       renderMappings();
+      renderCipherText();
       decodeText();
       messageEl.textContent = "Hint applied: " + cipherLetter + " → " + plainLetter + ".";
       messageEl.className = "";
@@ -490,7 +509,7 @@
         return;
       }
 
-      cipherEl.textContent = cipherText;
+      renderCipherText();
       if (solutionText) {
         messageEl.textContent = "Message loaded. Start mapping letters or tap 'Check Solution' when ready.";
       } else {

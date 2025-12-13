@@ -187,3 +187,8 @@ body.extra-spacing .plain-text {
   letter-spacing: 0.1em;
   font-family: monospace;
 }
+
+/* Highlight substituted letters in cipher text */
+.cipher-text .substituted {
+  color: #888;
+}
