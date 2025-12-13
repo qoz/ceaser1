@@ -354,7 +354,8 @@
       }
 
       var dateText = puzzle.publishDate ? "Publish date: " + puzzle.publishDate + ". " : "";
-      messageEl.textContent = dateText + "Puzzle loaded. Start mapping letters or apply the hint.";
+      var hintText = (puzzle.hint && puzzle.hint.cipher && puzzle.hint.plain) ? " or apply the hint" : "";
+      messageEl.textContent = dateText + "Puzzle loaded. Start mapping letters" + hintText + ".";
       messageEl.className = "";
 
       resetMappings();
