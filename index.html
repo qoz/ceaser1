@@ -106,6 +106,12 @@
     <div id="freqView"></div>
   </div>
 
+  <!-- Available letters -->
+  <div class="section">
+    <div class="label">Available letters for substitution:</div>
+    <div id="availableLetters"></div>
+  </div>
+
   <!-- Controls -->
   <div class="controls">
     <button id="applyHintBtn" class="big-btn secondary">Apply Hint</button>
@@ -129,6 +135,7 @@
     const cipherInput   = document.getElementById("cipherInput");
     const solutionInput = document.getElementById("solutionInput");
     const freqViewEl    = document.getElementById("freqView");
+    const availableLettersEl = document.getElementById("availableLetters");
 
     const puzzleFileInput = document.getElementById("puzzleFileInput");
     const puzzleSelect    = document.getElementById("puzzleSelect");
@@ -260,6 +267,7 @@
             renderMappings();
             renderCipherText();
             decodeText();
+            renderAvailableLetters();
             messageEl.textContent = "";
             messageEl.className = "";
             return;
@@ -288,6 +296,7 @@
           renderMappings();
           renderCipherText();
           decodeText();
+          renderAvailableLetters();
           messageEl.textContent = "";
           messageEl.className = "";
         });
@@ -310,11 +319,32 @@
       });
     }
 
+    function renderAvailableLetters() {
+      var usedLetters = [];
+      alphabet.forEach(function (l) {
+        if (mapping[l]) {
+          usedLetters.push(mapping[l]);
+        }
+      });
+
+      availableLettersEl.innerHTML = "";
+      alphabet.forEach(function (letter) {
+        var span = document.createElement("span");
+        span.className = "alphabet-letter";
+        if (!usedLetters.includes(letter)) {
+          span.className += " available";
+        }
+        span.textContent = letter;
+        availableLettersEl.appendChild(span);
+      });
+    }
+
     function resetMappings() {
       alphabet.forEach(function (l) { mapping[l] = ""; });
       renderMappings();
       renderCipherText();
       decodeText();
+      renderAvailableLetters();
     }
 
     function setHintInfo(hint) {
@@ -491,6 +521,7 @@
       renderMappings();
       renderCipherText();
       decodeText();
+      renderAvailableLetters();
       messageEl.textContent = "Hint applied: " + cipherLetter + " → " + plainLetter + ".";
       messageEl.className = "";
     });
@@ -608,6 +639,7 @@
     // Initial render (no message yet)
     renderMappings();
     decodeText();
+    renderAvailableLetters();
     autoLoadPuzzlesFromServer();
 
     // Default mode: puzzle list (if user wants manual, they toggle it)
