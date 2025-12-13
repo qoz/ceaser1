@@ -323,8 +323,10 @@
         var c = String(currentHint.cipher).toUpperCase();
         var p = String(currentHint.plain).toUpperCase();
         hintInfo.textContent = "Hint: " + c + " → " + p + " (use 'Apply Hint').";
+        applyHintBtn.style.display = "";
       } else {
         hintInfo.textContent = "";
+        applyHintBtn.style.display = "none";
       }
     }
 
