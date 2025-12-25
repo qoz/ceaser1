@@ -76,6 +76,28 @@
         "plain": "D"
       },
       "publishDate": "2025-12-14"
+    },
+    {
+      "id": "p8",
+      "title": "2025-12-25 quip",
+      "cipher": "RORVRYI HNODN JE DNYLAOH TYXNDAYI EJD CALV YWJRX JON JE VYOXY BIYRV' DNAOLNND: BJTNX WJJCV.",
+      "solution": "",
+      "hint": {
+        "cipher": "H",
+        "plain": "G"
+      },
+      "publishDate": "2025-12-25"
+    },
+    {
+      "id": "p9",
+      "title": "2025-12-25 quote",
+      "cipher": "VGZY HI BGTHXYUZX, GJ YGNRQGY, ENJXM'Y BNUJ ITNU Z XYNTJ. VGZY HI BGTHXYUZX, AJTGZAX, UJZMX Z FHYYFJ SHY UNTJ. 'GNV YGJ QTHMBG XYNFJ BGTHXYUZX'",
+      "solution": "",
+      "hint": {
+        "cipher": "",
+        "plain": ""
+      },
+      "publishDate": "2025-12-25"
     }
   ]
 }
