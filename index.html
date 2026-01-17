@@ -137,10 +137,10 @@
 
       // Split cipher text into words and create word containers
       const words = cipherText.split(/(\s+)/); // Keep delimiters (spaces)
-      
+
       words.forEach(function(word) {
         if (!word) return;
-        
+
         // If it's whitespace, create a space element
         if (/^\s+$/.test(word)) {
           const space = document.createElement("span");
@@ -149,11 +149,11 @@
           letterBoxGridEl.appendChild(space);
           return;
         }
-        
+
         // Create a word container
         const wordContainer = document.createElement("span");
         wordContainer.className = "word-container";
-        
+
         // Create letter boxes for each character in the word
         for (let i = 0; i < word.length; i++) {
           const ch = word[i];
@@ -185,7 +185,7 @@
             // Input event handler
             input.addEventListener("input", function (e) {
               let val = e.target.value.toUpperCase();
-              
+
               // Filter non-letters
               if (val && !alphabet.includes(val)) {
                 e.target.value = "";
@@ -218,12 +218,12 @@
               // Set new mapping
               mapping[cipherLetter] = val;
               e.target.value = val;
-              
+
               // Update all inputs with same cipher letter
               updateAllInputsForLetter(cipherLetter);
               decodeText();
               renderAvailableLetters();
-              
+
               // Auto-advance to next empty box
               advanceToNextEmptyBox(parseInt(e.target.dataset.index));
             });
@@ -247,30 +247,30 @@
             // Non-letter character within word (punctuation)
             const punctBox = document.createElement("span");
             punctBox.className = "letter-box";
-            
+
             // Punctuation at input level
             const punctTop = document.createElement("div");
             punctTop.className = "punctuation-top";
             punctTop.textContent = ch;
-            
+
             // Punctuation at cipher letter level
             const punctuation = document.createElement("div");
             punctuation.className = "cipher-letter";
             punctuation.textContent = ch;
-            
+
             // Empty spacer at frequency level
             const emptyFreq = document.createElement("div");
             emptyFreq.className = "freq-count-small";
             emptyFreq.innerHTML = "&nbsp;";
-            
+
             punctBox.appendChild(punctTop);
             punctBox.appendChild(punctuation);
             punctBox.appendChild(emptyFreq);
-            
+
             wordContainer.appendChild(punctBox);
           }
         }
-        
+
         letterBoxGridEl.appendChild(wordContainer);
       });
 
@@ -288,17 +288,17 @@
     // Auto-advance focus to next empty input box
     function advanceToNextEmptyBox(currentIndex) {
       const allInputs = letterBoxGridEl.querySelectorAll('.letter-input');
-      
+
       // Find the current input element
       let foundCurrent = false;
       for (let i = 0; i < allInputs.length; i++) {
         const inputIndex = parseInt(allInputs[i].dataset.index);
-        
+
         // Skip until we find an input after the current one
         if (inputIndex <= currentIndex) {
           continue;
         }
-        
+
         // Focus on the first empty box after the current position
         if (!allInputs[i].value) {
           allInputs[i].focus();
@@ -310,11 +310,11 @@
     // Move to previous input box on backspace
     function moveToPreviousBox(currentIndex) {
       const allInputs = letterBoxGridEl.querySelectorAll('.letter-input');
-      
+
       // Find the previous input before the current position
       for (let i = allInputs.length - 1; i >= 0; i--) {
         const inputIndex = parseInt(allInputs[i].dataset.index);
-        
+
         if (inputIndex < currentIndex) {
           allInputs[i].focus();
           return;
