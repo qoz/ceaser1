@@ -9,95 +9,39 @@
 <body>
   <h1>Caesar Cipher Solver</h1>
 
-  <!-- Developer mode toggle -->
-  <div class="section" id="devModeSection">
-    <label class="label">
-      <input type="checkbox" id="devMode" />
-      Developer mode
-    </label>
-  </div>
-
-  <!-- Text display options -->
+  <!-- Puzzle selection -->
   <div class="section">
-    <div class="label">Text display options:</div>
-    <label class="label">
-      <input type="checkbox" id="largePrint" />
-      Large Print
-    </label>
-    <br />
-    <label class="label">
-      <input type="checkbox" id="extraSpacing" />
-      Extra Letter Spacing
-    </label>
+    <div class="label">Choose a puzzle:</div>
+    <select id="puzzleSelect">
+      <option value="">(No puzzles loaded)</option>
+    </select>
+    <div id="hintInfo" class="label" style="margin-top:6px; text-align:center;"></div>
   </div>
 
-  <!-- Play mode toggle -->
-  <div class="section" id="playModeSection">
-    <div class="label">Play mode:</div>
-    <label class="label">
-      <input type="radio" name="playMode" id="modePuzzle" value="puzzle" />
-      Use puzzle list
-    </label>
-    <br />
-    <label class="label">
-      <input type="radio" name="playMode" id="modeManual" value="manual" />
-      Enter puzzle manually
-    </label>
-  </div>
-
-  <!-- Puzzle-based play (JSON puzzles + dev mode) -->
-  <div id="puzzleModeSection">
-    <!-- Puzzle loading section -->
-    <div class="section" id="loadPuzzlesSection">
-      <div id="fileInputSection">
-        <div class="label">Load puzzles from file (JSON):</div>
-        <input type="file" id="puzzleFileInput" accept=".json,application/json,text/plain" />
-      </div>
-
-      <div class="label" style="margin-top:8px;">Choose a puzzle:</div>
-      <select id="puzzleSelect">
-        <option value="">(No puzzles loaded)</option>
-      </select>
-
-      <div id="hintInfo" class="label" style="margin-top:6px; text-align:center;"></div>
-    </div>
-
-    <!-- Dev mode toggle -->
-    </div>
-
-  <!-- Manual entry play -->
-  <div id="manualModeSection">
-    <!-- Manual entry section -->
-    <div class="section">
-      <div class="label">Enter encrypted message manually:</div>
-      <textarea id="cipherInput" placeholder="Paste or type the encrypted text here..."></textarea>
-
-      <div class="label" style="margin-top:8px;">
-        (Optional) Enter known solution text for checking:
-      </div>
-      <input id="solutionInput" type="text"
-             placeholder="If you know the plaintext, enter it here for 'Check Solution'..." />
-
-      <button id="loadBtn" class="big-btn">Load Message</button>
-    </div>
-  </div>
-
-  <!-- Encrypted text display -->
+  <!-- Manual entry -->
   <div class="section">
-    <div class="label">Encrypted message:</div>
-    <div id="cipher" class="cipher-text"></div>
+    <div class="label">Or enter encrypted message manually:</div>
+    <textarea id="cipherInput" placeholder="Paste or type the encrypted text here..."></textarea>
+
+    <div class="label" style="margin-top:8px;">
+      (Optional) Enter known solution text for checking:
+    </div>
+    <input id="solutionInput" type="text"
+           placeholder="If you know the plaintext, enter it here for 'Check Solution'..." />
+
+    <button id="loadBtn" class="big-btn">Load Message</button>
+  </div>
+
+  <!-- Letter box grid for cipher solving -->
+  <div class="section">
+    <div class="label">Encrypted message - Type your guesses in the boxes:</div>
+    <div id="letterBoxGrid" class="letter-box-grid"></div>
   </div>
 
   <!-- Decoded output -->
   <div class="section">
     <div class="label">Your decryption:</div>
     <div id="plain" class="plain-text"></div>
-  </div>
-
-  <!-- Letter substitution UI -->
-  <div class="section">
-    <div class="label">Tap a letter to set its replacement:</div>
-    <div id="mappings"></div>
   </div>
 
   <!-- Frequency view -->
@@ -125,57 +69,28 @@
   <script>
     const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
 
-    const cipherEl      = document.getElementById("cipher");
-    const plainEl       = document.getElementById("plain");
-    const mappingsEl    = document.getElementById("mappings");
-    const messageEl     = document.getElementById("message");
-    const checkBtn      = document.getElementById("checkBtn");
-    const clearBtn      = document.getElementById("clearBtn");
-    const loadBtn       = document.getElementById("loadBtn");
-    const cipherInput   = document.getElementById("cipherInput");
-    const solutionInput = document.getElementById("solutionInput");
-    const freqViewEl    = document.getElementById("freqView");
+    const letterBoxGridEl = document.getElementById("letterBoxGrid");
+    const plainEl         = document.getElementById("plain");
+    const messageEl       = document.getElementById("message");
+    const checkBtn        = document.getElementById("checkBtn");
+    const clearBtn        = document.getElementById("clearBtn");
+    const loadBtn         = document.getElementById("loadBtn");
+    const cipherInput     = document.getElementById("cipherInput");
+    const solutionInput   = document.getElementById("solutionInput");
+    const freqViewEl      = document.getElementById("freqView");
     const availableLettersEl = document.getElementById("availableLetters");
-
-    const puzzleFileInput = document.getElementById("puzzleFileInput");
     const puzzleSelect    = document.getElementById("puzzleSelect");
     const hintInfo        = document.getElementById("hintInfo");
     const applyHintBtn    = document.getElementById("applyHintBtn");
-    const devModeCheckbox = document.getElementById("devMode");
-    const largePrintCheckbox = document.getElementById("largePrint");
-    const extraSpacingCheckbox = document.getElementById("extraSpacing");
-
-    const modePuzzleRadio = document.getElementById("modePuzzle");
-    const modeManualRadio = document.getElementById("modeManual");
-    const puzzleModeSection = document.getElementById("puzzleModeSection");
-    const manualModeSection = document.getElementById("manualModeSection");
-    const playModeSection = document.getElementById("playModeSection");
-    const loadPuzzlesSection = document.getElementById("loadPuzzlesSection");
-    const fileInputSection = document.getElementById("fileInputSection");
 
     let cipherText   = "";
     let solutionText = "";
     let puzzles      = [];
     let currentHint  = null;
-    let isPuzzleLoaded = false;  // track whether current content came from a puzzle
 
     // Mapping dictionary: cipher letter -> guessed plaintext letter
     const mapping = {};
     alphabet.forEach(function (l) { mapping[l] = ""; });
-
-    function updateDevMode() {
-      const checked = devModeCheckbox.checked;
-      playModeSection.style.display = checked ? "" : "none";
-      fileInputSection.style.display = checked ? "" : "none";
-      // Also, reveal solutions if applicable
-      if (isPuzzleLoaded && cipherText) {
-        if (checked) {
-          solutionInput.value = solutionText || "";
-        } else {
-          solutionInput.value = "";
-        }
-      }
-    }
 
     function computeFrequencies() {
       const freq = {};
@@ -188,21 +103,7 @@
       return freq;
     }
 
-    // Render cipher text with highlighting for substituted letters
-    function renderCipherText() {
-      let html = "";
-      for (const ch of cipherText) {
-        const up = ch.toUpperCase();
-        if (alphabet.includes(up) && mapping[up]) {
-          html += '<span class="substituted">' + ch + '</span>';
-        } else {
-          html += ch;
-        }
-      }
-      cipherEl.innerHTML = html;
-    }
-
-    // Shows thin-spaced underscores for unknown letters
+    // Shows decoded text with underscores for unknown letters
     function decodeText() {
       let decoded = "";
 
@@ -223,8 +124,9 @@
       plainEl.innerHTML = decoded;
     }
 
-    function renderMappings() {
-      mappingsEl.innerHTML = "";
+    // Render the letter box grid
+    function renderLetterBoxGrid() {
+      letterBoxGridEl.innerHTML = "";
       freqViewEl.innerHTML = "";
 
       if (!cipherText) {
@@ -232,76 +134,197 @@
       }
 
       const freq = computeFrequencies();
-      const usedLetters = Object.keys(freq).filter(function (l) {
-        return freq[l] > 0;
+
+      // Split cipher text into words and create word containers
+      const words = cipherText.split(/(\s+)/); // Keep delimiters (spaces)
+      
+      words.forEach(function(word) {
+        if (!word) return;
+        
+        // If it's whitespace, create a space element
+        if (/^\s+$/.test(word)) {
+          const space = document.createElement("span");
+          space.className = "word-space";
+          space.textContent = " ";
+          letterBoxGridEl.appendChild(space);
+          return;
+        }
+        
+        // Create a word container
+        const wordContainer = document.createElement("span");
+        wordContainer.className = "word-container";
+        
+        // Create letter boxes for each character in the word
+        for (let i = 0; i < word.length; i++) {
+          const ch = word[i];
+          const up = ch.toUpperCase();
+          const globalIndex = cipherText.indexOf(word) + i;
+
+          if (alphabet.includes(up)) {
+            // Create letter box container
+            const box = document.createElement("span");
+            box.className = "letter-box";
+
+            // Input field for player's guess
+            const input = document.createElement("input");
+            input.type = "text";
+            input.maxLength = 1;
+            input.className = "letter-input";
+            input.value = mapping[up] || "";
+            input.dataset.cipherLetter = up;
+            input.dataset.index = globalIndex;
+
+            // Keydown event for backspace navigation
+            input.addEventListener("keydown", function (e) {
+              if (e.key === "Backspace" && !e.target.value) {
+                e.preventDefault();
+                moveToPreviousBox(parseInt(e.target.dataset.index));
+              }
+            });
+
+            // Input event handler
+            input.addEventListener("input", function (e) {
+              let val = e.target.value.toUpperCase();
+              
+              // Filter non-letters
+              if (val && !alphabet.includes(val)) {
+                e.target.value = "";
+                return;
+              }
+
+              const cipherLetter = e.target.dataset.cipherLetter;
+              const oldValue = mapping[cipherLetter];
+
+              if (!val) {
+                // Clearing
+                mapping[cipherLetter] = "";
+                updateAllInputsForLetter(cipherLetter);
+                decodeText();
+                renderAvailableLetters();
+                return;
+              }
+
+              // Check for duplicate assignments
+              const conflict = alphabet.find(function (l) {
+                return mapping[l] === val && l !== cipherLetter;
+              });
+
+              if (conflict) {
+                // Auto-clear the conflicting mapping
+                mapping[conflict] = "";
+                updateAllInputsForLetter(conflict);
+              }
+
+              // Set new mapping
+              mapping[cipherLetter] = val;
+              e.target.value = val;
+              
+              // Update all inputs with same cipher letter
+              updateAllInputsForLetter(cipherLetter);
+              decodeText();
+              renderAvailableLetters();
+              
+              // Auto-advance to next empty box
+              advanceToNextEmptyBox(parseInt(e.target.dataset.index));
+            });
+
+            // Encrypted letter display
+            const cipherLetterEl = document.createElement("div");
+            cipherLetterEl.className = "cipher-letter";
+            cipherLetterEl.textContent = ch;
+
+            // Frequency count display
+            const freqCountEl = document.createElement("div");
+            freqCountEl.className = "freq-count-small";
+            freqCountEl.textContent = freq[up];
+
+            box.appendChild(input);
+            box.appendChild(cipherLetterEl);
+            box.appendChild(freqCountEl);
+
+            wordContainer.appendChild(box);
+          } else {
+            // Non-letter character within word (punctuation)
+            const punctBox = document.createElement("span");
+            punctBox.className = "letter-box";
+            
+            // Punctuation at input level
+            const punctTop = document.createElement("div");
+            punctTop.className = "punctuation-top";
+            punctTop.textContent = ch;
+            
+            // Punctuation at cipher letter level
+            const punctuation = document.createElement("div");
+            punctuation.className = "cipher-letter";
+            punctuation.textContent = ch;
+            
+            // Empty spacer at frequency level
+            const emptyFreq = document.createElement("div");
+            emptyFreq.className = "freq-count-small";
+            emptyFreq.innerHTML = "&nbsp;";
+            
+            punctBox.appendChild(punctTop);
+            punctBox.appendChild(punctuation);
+            punctBox.appendChild(emptyFreq);
+            
+            wordContainer.appendChild(punctBox);
+          }
+        }
+        
+        letterBoxGridEl.appendChild(wordContainer);
       });
 
-      // Mapping buttons (alphabetical order)
-      const usedAlphabetical = usedLetters.slice().sort();
+      renderFrequencyView(freq);
+    }
 
-      usedAlphabetical.forEach(function (letter) {
-        const btn = document.createElement("button");
-        btn.className = "map-btn";
+    // Update all input boxes for a specific cipher letter
+    function updateAllInputsForLetter(cipherLetter) {
+      const inputs = letterBoxGridEl.querySelectorAll('input[data-cipher-letter="' + cipherLetter + '"]');
+      inputs.forEach(function (input) {
+        input.value = mapping[cipherLetter] || "";
+      });
+    }
 
-        btn.innerHTML =
-          '<span class="letter">' + letter + '</span>' +
-          '<span class="count">' + freq[letter] + '</span>' +
-          '<span class="arrow">→</span>' +
-          '<span class="target">' + (mapping[letter] || "_") + '</span>';
+    // Auto-advance focus to next empty input box
+    function advanceToNextEmptyBox(currentIndex) {
+      const allInputs = letterBoxGridEl.querySelectorAll('.letter-input');
+      
+      // Find the current input element
+      let foundCurrent = false;
+      for (let i = 0; i < allInputs.length; i++) {
+        const inputIndex = parseInt(allInputs[i].dataset.index);
+        
+        // Skip until we find an input after the current one
+        if (inputIndex <= currentIndex) {
+          continue;
+        }
+        
+        // Focus on the first empty box after the current position
+        if (!allInputs[i].value) {
+          allInputs[i].focus();
+          return;
+        }
+      }
+    }
 
-        btn.addEventListener("click", function () {
-          const current = mapping[letter] || "";
-          const promptMsg = "Replace " + letter + " with (leave empty to clear):";
-          const input = window.prompt(promptMsg, current);
+    // Move to previous input box on backspace
+    function moveToPreviousBox(currentIndex) {
+      const allInputs = letterBoxGridEl.querySelectorAll('.letter-input');
+      
+      // Find the previous input before the current position
+      for (let i = allInputs.length - 1; i >= 0; i--) {
+        const inputIndex = parseInt(allInputs[i].dataset.index);
+        
+        if (inputIndex < currentIndex) {
+          allInputs[i].focus();
+          return;
+        }
+      }
+    }
 
-          if (input === null) {
-            return; // cancelled
-          }
-
-          const trimmed = input.trim().toUpperCase();
-          const newChar = trimmed.length > 0 ? trimmed[0] : "";
-
-          // Clearing substitution
-          if (!newChar) {
-            mapping[letter] = "";
-            renderMappings();
-            renderCipherText();
-            decodeText();
-            renderAvailableLetters();
-            messageEl.textContent = "";
-            messageEl.className = "";
-            return;
-          }
-
-          // Prevent duplicate substitutions
-          const conflict = alphabet.find(function (l) {
-            return mapping[l] === newChar && l !== letter;
-          });
-
-          if (conflict) {
-            const confirmMsg =
-              "'" + newChar + "' is already used as a substitution for '" +
-              conflict + "'. Use it for '" + letter +
-              "' instead and clear it from '" + conflict + "'?";
-            const ok = window.confirm(confirmMsg);
-            if (!ok) {
-              return;
-            }
-            // Clear conflicting mapping
-            mapping[conflict] = "";
-          }
-
-          mapping[letter] = newChar;
-
-          renderMappings();
-          renderCipherText();
-          decodeText();
-          renderAvailableLetters();
-          messageEl.textContent = "";
-          messageEl.className = "";
-        });
-
-        mappingsEl.appendChild(btn);
+    function renderFrequencyView(freq) {
+      const usedLetters = Object.keys(freq).filter(function (l) {
+        return freq[l] > 0;
       });
 
       // Frequency view (sorted by descending frequency)
@@ -341,8 +364,7 @@
 
     function resetMappings() {
       alphabet.forEach(function (l) { mapping[l] = ""; });
-      renderMappings();
-      renderCipherText();
+      renderLetterBoxGrid();
       decodeText();
       renderAvailableLetters();
     }
@@ -363,17 +385,9 @@
     function loadPuzzleIntoGame(puzzle) {
       cipherText   = puzzle.cipher || "";
       solutionText = puzzle.solution || "";
-      isPuzzleLoaded = true;
 
-      cipherEl.textContent = cipherText;
       cipherInput.value    = cipherText;
-
-      // Only reveal solution in dev mode
-      if (devModeCheckbox.checked) {
-        solutionInput.value = solutionText;
-      } else {
-        solutionInput.value = "";
-      }
+      solutionInput.value  = "";
 
       setHintInfo(puzzle.hint);
 
@@ -385,11 +399,10 @@
 
       var dateText = puzzle.publishDate ? "Publish date: " + puzzle.publishDate + ". " : "";
       var hintText = (puzzle.hint && puzzle.hint.cipher && puzzle.hint.plain) ? " or apply the hint" : "";
-      messageEl.textContent = dateText + "Puzzle loaded. Start mapping letters" + hintText + ".";
+      messageEl.textContent = dateText + "Puzzle loaded. Start typing your guesses" + hintText + ".";
       messageEl.className = "";
 
       resetMappings();
-      renderCipherText();
     }
 
     // Helper: apply puzzle data structure from JSON into UI
@@ -424,66 +437,19 @@
       setHintInfo(null);
     }
 
-    // File loading for puzzles (manual)
-    puzzleFileInput.addEventListener("change", function (e) {
-      const file = e.target.files && e.target.files[0];
-      if (!file) {
-        return;
-      }
-
-      const reader = new FileReader();
-      reader.onload = function () {
-        try {
-          const text = reader.result;
-          let data = JSON.parse(text);
-
-          applyPuzzleData(data);
-
-          if (puzzles.length) {
-            messageEl.textContent = "Puzzles loaded from file. Choose one from the dropdown.";
-            messageEl.className = "";
-          } else {
-            messageEl.textContent = "No puzzles found in file.";
-            messageEl.className = "err";
-          }
-        } catch (err) {
-          console.log(err);
-          puzzles = [];
-          puzzleSelect.innerHTML = '<option value="">(Error reading file)</option>';
-          setHintInfo(null);
-          messageEl.textContent = "Error: invalid puzzles file (not valid JSON).";
-          messageEl.className = "err";
-        }
-      };
-      reader.readAsText(file);
-    });
-
     // Selecting a puzzle
     puzzleSelect.addEventListener("change", function () {
       const value = puzzleSelect.value;
       if (value === "") {
         setHintInfo(null);
-        isPuzzleLoaded = false;
         return;
       }
       const index = parseInt(value, 10);
       if (isNaN(index) || !puzzles[index]) {
         setHintInfo(null);
-        isPuzzleLoaded = false;
         return;
       }
       loadPuzzleIntoGame(puzzles[index]);
-    });
-
-    // Dev mode toggle: show/hide advanced sections and reveal solutions
-    devModeCheckbox.addEventListener("change", updateDevMode);
-
-    // Text display options
-    largePrintCheckbox.addEventListener("change", function () {
-      document.body.classList.toggle("large-print", largePrintCheckbox.checked);
-    });
-    extraSpacingCheckbox.addEventListener("change", function () {
-      document.body.classList.toggle("extra-spacing", extraSpacingCheckbox.checked);
     });
 
     // Apply hint button
@@ -518,36 +484,35 @@
 
       mapping[cipherLetter] = plainLetter;
 
-      renderMappings();
-      renderCipherText();
+      updateAllInputsForLetter(cipherLetter);
+      if (conflict) {
+        updateAllInputsForLetter(conflict);
+      }
       decodeText();
       renderAvailableLetters();
       messageEl.textContent = "Hint applied: " + cipherLetter + " → " + plainLetter + ".";
       messageEl.className = "";
     });
 
-    // Manual load (existing behavior)
+    // Manual load
     loadBtn.addEventListener("click", function () {
       cipherText   = (cipherInput.value || "").trim();
       solutionText = (solutionInput.value || "").trim();
       setHintInfo(null);
-      isPuzzleLoaded = false; // this is a manual entry, not a JSON puzzle
 
       if (!cipherText) {
         messageEl.textContent = "Please enter an encrypted message.";
         messageEl.className   = "err";
-        cipherEl.textContent  = "";
+        letterBoxGridEl.innerHTML = "";
         plainEl.textContent   = "";
         freqViewEl.innerHTML  = "";
-        mappingsEl.innerHTML  = "";
         return;
       }
 
-      renderCipherText();
       if (solutionText) {
-        messageEl.textContent = "Message loaded. Start mapping letters or tap 'Check Solution' when ready.";
+        messageEl.textContent = "Message loaded. Start typing your guesses or tap 'Check Solution' when ready.";
       } else {
-        messageEl.textContent = "Message loaded. Start mapping letters.";
+        messageEl.textContent = "Message loaded. Start typing your guesses.";
       }
       messageEl.className = "";
 
@@ -588,29 +553,6 @@
       messageEl.className = "";
     });
 
-    // Mode toggle logic
-    function setMode(mode) {
-      if (mode === "manual") {
-        puzzleModeSection.style.display = "none";
-        manualModeSection.style.display = "";
-      } else {
-        puzzleModeSection.style.display = "";
-        manualModeSection.style.display = "none";
-      }
-    }
-
-    modePuzzleRadio.addEventListener("change", function () {
-      if (modePuzzleRadio.checked) {
-        setMode("puzzle");
-      }
-    });
-
-    modeManualRadio.addEventListener("change", function () {
-      if (modeManualRadio.checked) {
-        setMode("manual");
-      }
-    });
-
     // Try to auto-load puzzles.json from the same site
     function autoLoadPuzzlesFromServer() {
       var xhr = new XMLHttpRequest();
@@ -636,17 +578,11 @@
       xhr.send();
     }
 
-    // Initial render (no message yet)
-    renderMappings();
+    // Initial render
+    renderLetterBoxGrid();
     decodeText();
     renderAvailableLetters();
     autoLoadPuzzlesFromServer();
-
-    // Default mode: puzzle list (if user wants manual, they toggle it)
-    modePuzzleRadio.checked = true;
-    modeManualRadio.checked = false;
-    setMode("puzzle");
-    updateDevMode();
   </script>
 </body>
 </html>
