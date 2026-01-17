@@ -22,7 +22,7 @@ h1 {
   margin-bottom: 4px;
 }
 
-textarea, input[type="text"], select {
+textarea, input[type="text"]:not(.letter-input), select {
   width: 100%;
   box-sizing: border-box;
   padding: 8px;
@@ -169,28 +169,93 @@ button.big-btn.secondary {
   font-size: 0.8rem;
 }
 
-/* Text display options */
-body.large-print .cipher-text,
-body.large-print .plain-text {
-  font-size: 1.6em;
+/* Letter box grid styles */
+.letter-box-grid {
+  padding: 12px;
+  background: #222;
+  border-radius: 8px;
+  border: 1px solid #444;
+  line-height: 5.25rem;
+  text-align: center;
 }
 
-body.large-print .map-btn,
-body.large-print .freq-item,
-body.large-print button.big-btn,
-body.large-print #message {
-  font-size: 1.2em;
+.word-container {
+  display: inline-block;
+  white-space: nowrap;
 }
 
-body.extra-spacing .cipher-text,
-body.extra-spacing .plain-text {
-  letter-spacing: 0.1em;
-  font-family: monospace;
+.word-space {
+  display: inline-block;
+  width: 1em;
 }
 
-/* Highlight substituted letters in cipher text */
-.cipher-text .substituted {
-  color: #888;
+.letter-box {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0px;
+  vertical-align: top;
+  margin: 0 1px;
+}
+
+.letter-input {
+  width: 29px;
+  height: 29px;
+  text-align: center;
+  font-size: 0.9rem;
+  font-weight: bold;
+  padding: 0;
+  border: 2px solid #555;
+  border-radius: 4px;
+  background: #222;
+  color: #7cf;
+  text-transform: uppercase;
+  box-sizing: border-box;
+}
+
+.letter-input:focus {
+  outline: none;
+  border-color: #2a6;
+  background: #2a2a2a;
+}
+
+.cipher-letter {
+  font-size: 1.1rem;
+  font-weight: bold;
+  color: #f5f5f5;
+  margin-top: 0;
+  margin-bottom: 0;
+  line-height: 1;
+}
+
+.freq-count-small {
+  font-size: 0.75rem;
+  opacity: 0.7;
+  color: #f5f5f5;
+  margin-top: 2px;
+  line-height: 1;
+}
+
+.punctuation-top {
+  width: 29px;
+  height: 29px;
+  font-size: 1.1rem;
+  color: #f5f5f5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.letter-spacer {
+  display: inline-block;
+  white-space: pre;
+  font-size: 1.1rem;
+  color: #f5f5f5;
+  vertical-align: top;
+  padding-top: 0;
+  margin: 0 2px;
+  line-height: 29px;
+  height: 29px;
 }
 
 /* Available letters grid */
