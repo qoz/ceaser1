@@ -136,7 +136,8 @@
       const freq = computeFrequencies();
 
       // Split cipher text into words and create word containers
-      const words = cipherText.split(/(\s+)/); // Keep delimiters (spaces)
+      // Split on spaces and hyphens but keep them as delimiters
+      const words = cipherText.split(/(\s+|-)/);
 
       words.forEach(function(word) {
         if (!word) return;
@@ -147,6 +148,35 @@
           space.className = "word-space";
           space.textContent = " ";
           letterBoxGridEl.appendChild(space);
+          return;
+        }
+
+        // If it's a hyphen, treat it like punctuation
+        if (word === "-") {
+          const wordContainer = document.createElement("span");
+          wordContainer.className = "word-container";
+
+          const punctBox = document.createElement("span");
+          punctBox.className = "letter-box";
+
+          const punctTop = document.createElement("div");
+          punctTop.className = "punctuation-top";
+          punctTop.textContent = "-";
+
+          const punctuation = document.createElement("div");
+          punctuation.className = "cipher-letter";
+          punctuation.textContent = "-";
+
+          const emptyFreq = document.createElement("div");
+          emptyFreq.className = "freq-count-small";
+          emptyFreq.innerHTML = "&nbsp;";
+
+          punctBox.appendChild(punctTop);
+          punctBox.appendChild(punctuation);
+          punctBox.appendChild(emptyFreq);
+
+          wordContainer.appendChild(punctBox);
+          letterBoxGridEl.appendChild(wordContainer);
           return;
         }
 
@@ -174,22 +204,33 @@
             input.dataset.cipherLetter = up;
             input.dataset.index = globalIndex;
 
-            // Focus event to highlight matching letters
+            // Focus event to highlight matching letters and select text
             input.addEventListener("focus", function (e) {
               const cipherLetter = e.target.dataset.cipherLetter;
-              highlightMatchingLetters(cipherLetter, true);
+              highlightMatchingLetters(cipherLetter, true, e.target);
+              // Select all text so typing replaces the current value
+              e.target.select();
             });
 
             // Blur event to remove highlight
             input.addEventListener("blur", function (e) {
               const cipherLetter = e.target.dataset.cipherLetter;
-              highlightMatchingLetters(cipherLetter, false);
+              highlightMatchingLetters(cipherLetter, false, null);
             });
 
             // Keydown event for backspace navigation
             input.addEventListener("keydown", function (e) {
-              if (e.key === "Backspace" && !e.target.value) {
+              if (e.key === "Backspace") {
                 e.preventDefault();
+                const cipherLetter = e.target.dataset.cipherLetter;
+                // Clear the current cell
+                if (mapping[cipherLetter]) {
+                  mapping[cipherLetter] = "";
+                  updateAllInputsForLetter(cipherLetter);
+                  decodeText();
+                  renderAvailableLetters();
+                }
+                // Move to previous cell
                 moveToPreviousBox(parseInt(e.target.dataset.index));
               }
             });
@@ -335,15 +376,22 @@
     }
 
     // Highlight all letter boxes with matching cipher letter
-    function highlightMatchingLetters(cipherLetter, highlight) {
+    function highlightMatchingLetters(cipherLetter, highlight, focusedInput) {
       const allBoxes = letterBoxGridEl.querySelectorAll('.letter-box');
       allBoxes.forEach(function(box) {
         const input = box.querySelector('input[data-cipher-letter="' + cipherLetter + '"]');
         if (input) {
           if (highlight) {
             box.classList.add('highlighted');
+            // Add focused class only to the actively focused cell
+            if (focusedInput && input === focusedInput) {
+              box.classList.add('highlighted-focused');
+            } else {
+              box.classList.remove('highlighted-focused');
+            }
           } else {
             box.classList.remove('highlighted');
+            box.classList.remove('highlighted-focused');
           }
         }
       });
