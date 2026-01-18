@@ -174,6 +174,18 @@
             input.dataset.cipherLetter = up;
             input.dataset.index = globalIndex;
 
+            // Focus event to highlight matching letters
+            input.addEventListener("focus", function (e) {
+              const cipherLetter = e.target.dataset.cipherLetter;
+              highlightMatchingLetters(cipherLetter, true);
+            });
+
+            // Blur event to remove highlight
+            input.addEventListener("blur", function (e) {
+              const cipherLetter = e.target.dataset.cipherLetter;
+              highlightMatchingLetters(cipherLetter, false);
+            });
+
             // Keydown event for backspace navigation
             input.addEventListener("keydown", function (e) {
               if (e.key === "Backspace" && !e.target.value) {
@@ -322,23 +334,18 @@
       }
     }
 
-    function renderFrequencyView(freq) {
-      const usedLetters = Object.keys(freq).filter(function (l) {
-        return freq[l] > 0;
-      });
-
-      // Frequency view (sorted by descending frequency)
-      const sortedFreqLetters = usedLetters.slice().sort(function (a, b) {
-        return freq[b] - freq[a];
-      });
-
-      sortedFreqLetters.forEach(function (letter) {
-        const div = document.createElement("div");
-        div.className = "freq-item";
-        div.innerHTML =
-          '<span class="freq-letter">' + letter + '</span>' +
-          '<span class="freq-count">' + freq[letter] + '</span>';
-        freqViewEl.appendChild(div);
+    // Highlight all letter boxes with matching cipher letter
+    function highlightMatchingLetters(cipherLetter, highlight) {
+      const allBoxes = letterBoxGridEl.querySelectorAll('.letter-box');
+      allBoxes.forEach(function(box) {
+        const input = box.querySelector('input[data-cipher-letter="' + cipherLetter + '"]');
+        if (input) {
+          if (highlight) {
+            box.classList.add('highlighted');
+          } else {
+            box.classList.remove('highlighted');
+          }
+        }
       });
     }
 

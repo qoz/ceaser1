@@ -195,7 +195,20 @@ button.big-btn.secondary {
   align-items: center;
   gap: 0px;
   vertical-align: top;
-  margin: 0 1px;
+  margin: 0 -1px;
+  padding: 2px;
+  transition: background-color 0.2s;
+}
+
+.letter-box.highlighted {
+  background-color: rgba(34, 170, 102, 0.3);
+  border-radius: 4px;
+}
+
+.letter-box.highlighted .letter-input {
+  border-color: #2a6;
+  background: rgba(34, 170, 102, 0.4);
+  color: #fff;
 }
 
 .letter-input {
